@@ -1,0 +1,2090 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="antialiased">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Decorei TJSP — Trilhas da Lei Seca</title>
+
+  <!-- Fonte Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Mammoth.js para leitura de arquivos .docx 100% no navegador -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+
+  <style>
+    html, body {
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeSlideUp 0.22s ease-out forwards;
+    }
+    /* Destaques VUNESP */
+    .law-text mark {
+      background-color: #fef08a;
+      color: #713f12;
+      padding: 0.08rem 0.28rem;
+      border-radius: 0.35rem;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+    .dark .law-text mark {
+      background-color: rgba(234, 179, 8, 0.28);
+      color: #fde047;
+    }
+    .hide-marks .law-text mark {
+      background-color: transparent !important;
+      color: inherit !important;
+      padding: 0 !important;
+      font-weight: inherit !important;
+    }
+  </style>
+</head>
+
+<body class="bg-slate-200 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans transition-colors duration-200">
+
+  <!-- App Shell Mobile-First -->
+  <div id="app-shell" class="relative mx-auto min-h-screen w-full max-w-md bg-slate-50 dark:bg-slate-900 shadow-2xl sm:border-x sm:border-slate-200/80 dark:sm:border-slate-800 flex flex-col">
+
+    <!-- Banner de Data Simulada (SRS) -->
+    <div id="sim-banner" class="hidden sticky top-0 z-40 bg-amber-500 text-slate-950 px-4 py-2 text-xs font-bold flex items-center justify-between shadow-sm">
+      <div class="flex items-center gap-2">
+        <span>🧪</span>
+        <span id="sim-banner-text">Simulador SRS ativo</span>
+      </div>
+      <button onclick="AppController.resetSimulatedDate()" class="bg-slate-950/15 hover:bg-slate-950/25 px-2.5 py-1 rounded-full transition">
+        Voltar p/ Hoje
+      </button>
+    </div>
+
+    <!-- Cabeçalho Principal -->
+    <header id="main-header" class="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 py-3 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-sm shadow-indigo-600/30">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v18m-7-4h14M5 7l7-4 7 4M5 7l-2 6h4l-2-6zm14 0l-2 6h4l-2-6z" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white truncate">Decorei TJSP</h1>
+          <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 truncate">Trilhas da Lei Seca</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <div title="Ofensiva (dias seguidos)" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200/80 dark:border-amber-800/60 text-amber-700 dark:text-amber-300 text-xs font-extrabold">
+          <span>🔥</span>
+          <span id="header-streak">0d</span>
+        </div>
+        <div title="XP acumulado" class="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/80 dark:border-indigo-800/60 text-indigo-700 dark:text-indigo-300 text-xs font-extrabold">
+          <span>⚡</span>
+          <span id="header-xp">0</span>
+        </div>
+        <button onclick="AppController.toggleTheme()" aria-label="Alternar tema" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-amber-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition">
+          <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Cabeçalho do Player Full-Focus (Leitura / Arena de Games / Revisão SRS) -->
+    <header id="player-header" class="hidden sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 py-3">
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <button onclick="PlayerController.requestExit()" class="flex items-center gap-1 px-2 py-1.5 -ml-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span>Sair</span>
+        </button>
+
+        <div id="player-header-center" class="text-center min-w-0 flex-1"></div>
+
+        <button onclick="AppController.toggleTheme()" aria-label="Alternar tema" class="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-amber-400 shrink-0">
+          <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+      <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+        <div id="player-progress-bar" class="h-full bg-indigo-600 dark:bg-indigo-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main id="main-content" class="flex-1 px-4 pt-4 pb-24 overflow-y-auto"></main>
+
+    <!-- Navegação Inferior (5 Abas) -->
+    <nav id="bottom-nav" class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-1.5 py-2 grid grid-cols-5 gap-1">
+      <button onclick="AppController.switchTab('trilhas')" data-tab="trilhas" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+        </svg>
+        <span>Trilhas</span>
+      </button>
+
+      <button onclick="AppController.switchTab('revisoes')" data-tab="revisoes" class="nav-btn relative flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition">
+        <span id="badge-revisoes" class="hidden absolute top-0.5 right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-extrabold flex items-center justify-center">0</span>
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Revisões</span>
+      </button>
+
+      <button onclick="AppController.switchTab('importar')" data-tab="importar" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+        </svg>
+        <span>Importar</span>
+      </button>
+
+      <button onclick="AppController.switchTab('erros')" data-tab="erros" class="nav-btn relative flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition">
+        <span id="badge-erros" class="hidden absolute top-0.5 right-2.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-500 text-slate-950 text-[9px] font-extrabold flex items-center justify-center">0</span>
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span>Erros</span>
+      </button>
+
+      <button onclick="AppController.switchTab('ajustes')" data-tab="ajustes" class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition">
+        <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span>Ajustes</span>
+      </button>
+    </nav>
+
+    <!-- Toast de Notificação -->
+    <div id="toast" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-sm px-4 py-3 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow-xl flex items-center gap-2.5 animate-fade-in">
+      <span id="toast-icon">✅</span>
+      <span id="toast-msg" class="flex-1"></span>
+    </div>
+
+    <!-- Modal Customizado (substitui alert/confirm) -->
+    <div id="modal-overlay" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="w-full max-w-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-2xl animate-fade-in">
+        <h3 id="modal-title" class="text-base font-extrabold text-slate-900 dark:text-white mb-1.5">Confirmação</h3>
+        <p id="modal-body" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-5"></p>
+        <div class="flex items-center gap-2">
+          <button id="modal-cancel" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition">Cancelar</button>
+          <button id="modal-confirm" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    /* ============================================================================
+       1. CONSTANTES, CHAVES DE STORAGE E DISCIPLINAS BASE DO EDITAL TJSP
+       ============================================================================ */
+    const STORAGE_KEYS = {
+      STATE: 'decorei_tjsp_state_v3',
+      CUSTOM_TRILHAS: 'decorei_tjsp_custom_trilhas_v3',
+      GEMINI_KEY: 'decorei_tjsp_gemini_key'
+    };
+
+    const BASE_DISCIPLINAS = [
+      {
+        id: 'penal',
+        nome: 'Direito Penal',
+        sigla: 'CP',
+        cor: 'indigo',
+        edital: 'Arts. 293 a 359 do CP',
+        trilhas: [
+          {
+            id: 'penal_cap1_peculato',
+            breadcrumb: 'TÍTULO XI › CAPÍTULO I',
+            titulo: 'Crimes Praticados por Funcionário Público contra a Administração',
+            subtitulo: 'Art. 312 ao Art. 317 • 3 artigos',
+            tempoLeituraMin: 5,
+            artigos: [
+              {
+                numero: 'Art. 312',
+                textoHtml: 'Apropriar-se o funcionário público de dinheiro, valor ou qualquer outro bem móvel, público ou particular, de que tem a posse em razão do cargo, ou desviá-lo, em proveito próprio ou alheio: Pena - <mark>reclusão, de dois a doze anos</mark>, e multa.\n§ 1º Aplica-se a mesma pena, se o funcionário público, embora <mark>não tendo a posse</mark> do dinheiro, valor ou bem, o subtrai, ou concorre para que seja subtraído, em proveito próprio ou alheio, valendo-se de facilidade que lhe proporciona a qualidade de funcionário.\n§ 2º Se o funcionário concorre <mark>culposamente</mark> para o crime de outrem: Pena - detenção, de três meses a um ano.\n§ 3º No caso do parágrafo anterior, a reparação do dano, se precede à <mark>sentença irrecorrível</mark>, <mark>extingue a punibilidade</mark>; se lhe é posterior, reduz de metade a pena imposta.'
+              },
+              {
+                numero: 'Art. 316',
+                textoHtml: '<mark>Exigir</mark>, para si ou para outrem, direta ou indiretamente, ainda que fora da função ou antes de assumi-la, mas em razão dela, vantagem indevida: Pena - <mark>reclusão, de 2 (dois) a 12 (doze) anos</mark>, e multa.'
+              },
+              {
+                numero: 'Art. 317',
+                textoHtml: '<mark>Solicitar ou receber</mark>, para si ou para outrem, direta ou indiretamente, ainda que fora da função ou antes de assumi-la, mas em razão dela, vantagem indevida, ou aceitar promessa de tal vantagem: Pena - reclusão, de 2 (dois) a 12 (doze) anos, e multa.\n§ 1º A pena é aumentada de <mark>um terço</mark>, se, em consequência da vantagem ou promessa, o funcionário retarda ou deixa de praticar qualquer ato de ofício ou o pratica infringindo dever funcional.'
+              }
+            ],
+            questoes: [
+              {
+                id: 'pen_c1_q1',
+                tipo: 'true_false',
+                artigoRef: 'Art. 312, § 3º',
+                enunciado: 'No peculato culposo, a reparação do dano realizada após a sentença irrecorrível extingue a punibilidade do funcionário público.',
+                respostaCorreta: false,
+                textoLiteral: 'Art. 312, § 3º - A reparação do dano, se <mark>precede à sentença irrecorrível</mark>, extingue a punibilidade; se lhe é posterior, <mark>reduz de metade</mark> a pena imposta.',
+                dicaVunesp: 'A VUNESP adora inverter: ANTES da sentença irrecorrível extingue; DEPOIS reduz de metade.'
+              },
+              {
+                id: 'pen_c1_q2',
+                tipo: 'cloze',
+                artigoRef: 'Art. 316',
+                enunciado: 'Configura concussão _____ , para si ou para outrem, direta ou indiretamente, vantagem indevida em razão da função.',
+                opcoes: ['exigir', 'solicitar', 'receber', 'aceitar promessa'],
+                respostaCorreta: 'exigir',
+                textoLiteral: 'Art. 316 - <mark>Exigir</mark>, para si ou para outrem, direta ou indiretamente, ainda que fora da função ou antes de assumi-la, mas em razão dela, vantagem indevida.',
+                dicaVunesp: 'Concussão = EXIGIR. Corrupção passiva (Art. 317) = SOLICITAR, RECEBER ou ACEITAR PROMESSA.'
+              },
+              {
+                id: 'pen_c1_q3',
+                tipo: 'multiple_choice',
+                artigoRef: 'Art. 317, § 1º',
+                enunciado: 'Na corrupção passiva, se em consequência da vantagem o funcionário retarda ou deixa de praticar ato de ofício, a pena é aumentada de:',
+                opcoes: ['Um sexto', 'Um terço', 'Metade', 'Dobro'],
+                respostaCorreta: 1,
+                textoLiteral: 'Art. 317, § 1º - A pena é aumentada de <mark>um terço</mark>, se, em consequência da vantagem ou promessa, o funcionário retarda ou deixa de praticar qualquer ato de ofício.',
+                dicaVunesp: 'Fração clássica de aumento na corrupção passiva exaurida: 1/3 (um terço).'
+              }
+            ]
+          },
+          {
+            id: 'penal_cap2_prevaricacao',
+            breadcrumb: 'TÍTULO XI › CAPÍTULO I',
+            titulo: 'Prevaricação e Condescendência Criminosa',
+            subtitulo: 'Art. 319 ao Art. 320 • 2 artigos',
+            tempoLeituraMin: 5,
+            artigos: [
+              {
+                numero: 'Art. 319',
+                textoHtml: 'Retardar ou deixar de praticar, indevidamente, ato de ofício, ou praticá-lo contra disposição expressa de lei, para satisfazer <mark>interesse ou sentimento pessoal</mark>: Pena - <mark>detenção, de três meses a um ano</mark>, e multa.'
+              },
+              {
+                numero: 'Art. 320',
+                textoHtml: 'Deixar o funcionário, por <mark>indulgência</mark>, de responsabilizar subordinado que cometeu infração no exercício do cargo ou, quando lhe falte competência, não levar o fato ao conhecimento da autoridade competente: Pena - detenção, de <mark>quinze dias a um mês</mark>, ou multa.'
+              }
+            ],
+            questoes: [
+              {
+                id: 'pen_c2_q1',
+                tipo: 'true_false',
+                artigoRef: 'Art. 319',
+                enunciado: 'A prevaricação exige o especial fim de agir consistente em satisfazer interesse ou sentimento pessoal.',
+                respostaCorreta: true,
+                textoLiteral: 'Art. 319 - Retardar ou deixar de praticar, indevidamente, ato de ofício (...) para satisfazer <mark>interesse ou sentimento pessoal</mark>.',
+                dicaVunesp: 'Sem interesse ou sentimento pessoal não há prevaricação; pode haver corrupção passiva privilegiada se for a pedido de outrem.'
+              },
+              {
+                id: 'pen_c2_q2',
+                tipo: 'cloze',
+                artigoRef: 'Art. 320',
+                enunciado: 'Na condescendência criminosa, o funcionário deixa de responsabilizar subordinado por _____ .',
+                opcoes: ['indulgência', 'interesse pessoal', 'negligência', 'vantagem indevida'],
+                respostaCorreta: 'indulgência',
+                textoLiteral: 'Art. 320 - Deixar o funcionário, por <mark>indulgência</mark>, de responsabilizar subordinado que cometeu infração no exercício do cargo.',
+                dicaVunesp: 'Indulgência (pena/clemência) é a palavra-chave exclusiva do Art. 320.'
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'admin',
+        nome: 'Estatuto 10.261/68',
+        sigla: 'ADM',
+        cor: 'emerald',
+        edital: 'Lei Estadual nº 10.261/68 + LIA',
+        trilhas: [
+          {
+            id: 'adm_cap1_penalidades',
+            breadcrumb: 'TÍTULO VI › CAPÍTULO II',
+            titulo: 'Das Penalidades e de sua Aplicação',
+            subtitulo: 'Art. 251 ao Art. 254 • 2 artigos',
+            tempoLeituraMin: 5,
+            artigos: [
+              {
+                numero: 'Art. 251',
+                textoHtml: 'São penas disciplinares:\nI - repreensão;\nII - suspensão;\nIII - multa;\nIV - demissão;\nV - demissão a bem do serviço público; e\nVI - <mark>cassação de aposentadoria ou disponibilidade</mark>.'
+              },
+              {
+                numero: 'Art. 254',
+                textoHtml: 'A pena de suspensão, que não excederá de <mark>90 (noventa) dias</mark>, será aplicada em caso de falta grave ou de reincidência.\nParágrafo único - A autoridade que aplicar a pena de suspensão poderá converter essa penalidade em multa, na base de <mark>50% (cinquenta por cento)</mark> por dia de vencimento ou remuneração, sendo o funcionário, nesse caso, obrigado a permanecer em serviço.'
+              }
+            ],
+            questoes: [
+              {
+                id: 'adm_c1_q1',
+                tipo: 'cloze',
+                artigoRef: 'Art. 254',
+                enunciado: 'A pena de suspensão no Estatuto dos Funcionários Públicos de SP não excederá de _____ dias.',
+                opcoes: ['30', '60', '90', '120'],
+                respostaCorreta: '90',
+                textoLiteral: 'Art. 254 - A pena de suspensão, que não excederá de <mark>90 (noventa) dias</mark>, será aplicada em caso de falta grave ou de reincidência.',
+                dicaVunesp: 'Suspensão = máximo 90 dias. Conversão em multa = 50% por dia, obrigado a trabalhar.'
+              },
+              {
+                id: 'adm_c1_q2',
+                tipo: 'true_false',
+                artigoRef: 'Art. 251',
+                enunciado: 'A advertência escrita é uma das penas disciplinares expressamente previstas no Art. 251 da Lei Estadual nº 10.261/68.',
+                respostaCorreta: false,
+                textoLiteral: 'Art. 251 - São penas disciplinares: I - <mark>repreensão</mark>; II - suspensão; III - multa; IV - demissão; V - demissão a bem do serviço público; VI - cassação de aposentadoria ou disponibilidade.',
+                dicaVunesp: 'Pegadinha clássica: na Lei 8.112 (federal) é "advertência"; na Lei 10.261 (SP) é "REPREENSÃO".'
+              }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'nscgj',
+        nome: 'Normas da Corregedoria',
+        sigla: 'NSCGJ',
+        cor: 'violet',
+        edital: 'Tomo I — Capítulos II, III, XI',
+        trilhas: [
+          {
+            id: 'nscgj_cap1_corregedoria',
+            breadcrumb: 'TOMO I › CAPÍTULO II › SEÇÃO I',
+            titulo: 'Da Função Correcional',
+            subtitulo: 'Art. 8º ao Art. 9º • 2 artigos',
+            tempoLeituraMin: 5,
+            artigos: [
+              {
+                numero: 'Art. 8º',
+                textoHtml: 'A função correcional consiste na orientação, reorganização e fiscalização dos órgãos e serviços judiciários de primeira instância, bem como na fiscalização da polícia judiciária, dos estabelecimentos prisionais e dos demais estabelecimentos em relação aos quais, por lei, tenha o juiz atribuições fiscalizadoras.\n§ 1º No desempenho da função correcional, poderão ser editadas ordens de serviço e demais atos administrativos de orientação e disciplina, corrigidos os erros e sancionadas as infrações, após regular procedimento administrativo disciplinar, <mark>sem prejuízo</mark> de revisões, correições e visitas.'
+              },
+              {
+                numero: 'Art. 9º',
+                textoHtml: 'A função correcional será exercida em todo o Estado pelo <mark>Corregedor Geral da Justiça</mark> e, nos limites de suas atribuições, pelos <mark>Juízes de Primeiro Grau</mark>.'
+              }
+            ],
+            questoes: [
+              {
+                id: 'nscgj_c1_q1',
+                tipo: 'multiple_choice',
+                artigoRef: 'Art. 9º',
+                enunciado: 'Segundo o Art. 9º das NSCGJ, a função correcional será exercida em todo o Estado pelo Corregedor Geral da Justiça e, nos limites de suas atribuições, pelos:',
+                opcoes: [
+                  'Desembargadores do Órgão Especial',
+                  'Juízes de Primeiro Grau',
+                  'Escrivães Judiciais',
+                  'Promotores de Justiça'
+                ],
+                respostaCorreta: 1,
+                textoLiteral: 'Art. 9º - A função correcional será exercida em todo o Estado pelo Corregedor Geral da Justiça e, nos limites de suas atribuições, pelos <mark>Juízes de Primeiro Grau</mark>.',
+                dicaVunesp: 'Função correcional: Corregedor Geral (todo o Estado) + Juízes de 1º Grau (nos limites de suas atribuições).'
+              }
+            ]
+          }
+        ]
+      },
+      { id: 'cpp', nome: 'Processo Penal', sigla: 'CPP', cor: 'rose', edital: 'CPP + Lei 9.099/95', trilhas: [] },
+      { id: 'cpc', nome: 'Processo Civil', sigla: 'CPC', cor: 'sky', edital: 'CPC + Lei 9.099/95 e 12.153/09', trilhas: [] },
+      { id: 'cf88', nome: 'Direito Constitucional', sigla: 'CF', cor: 'amber', edital: 'Arts. 5º ao 13, 37 a 41 e 92', trilhas: [] }
+    ];
+
+    /* ============================================================================
+       2. MOTOR DE REGEX HIERÁRQUICO DE LEI SECA (0% DE PERDA)
+       ============================================================================ */
+    const LawParser = {
+      /**
+       * Normaliza quebras de linha e espaços extras preservando estrutura de parágrafos.
+       */
+      normalizeText(raw) {
+        return raw
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n')
+          .replace(/\u00A0/g, ' ')
+          .replace(/[ \t]+/g, ' ')
+          .trim();
+      },
+
+      /**
+       * Verifica se uma linha é um cabeçalho estrutural:
+       * TÍTULO, CAPÍTULO, SEÇÃO ou SUBSEÇÃO (com ou sem acentos, romanos/arábicos/II-A/ÚNICO).
+       */
+      matchHeading(line) {
+        const clean = line.trim();
+        if (!clean || clean.length > 180) return null;
+
+        const rx = /^(T[ÍI]TULO|CAP[ÍI]TULO|SUBSE[ÇC][ÃA]O|SE[ÇC][ÃA]O)\s+([IVXLCDM]+(?:-[A-Z])?|\d+(?:-[A-Z])?|[ÚU]NICO)\b(?:\s*[-–—:.]\s*(.+))?$/i;
+        const m = clean.match(rx);
+        if (!m) return null;
+
+        const rawType = m[1].toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        let level = 1;
+        let labelType = 'TÍTULO';
+        if (rawType === 'TITULO') { level = 1; labelType = 'TÍTULO'; }
+        else if (rawType === 'CAPITULO') { level = 2; labelType = 'CAPÍTULO'; }
+        else if (rawType === 'SECAO') { level = 3; labelType = 'SEÇÃO'; }
+        else if (rawType === 'SUBSECAO') { level = 4; labelType = 'SUBSEÇÃO'; }
+
+        const code = `${labelType} ${m[2].toUpperCase()}`;
+        const inlineSubtitle = m[3] ? m[3].trim() : '';
+
+        return { level, labelType, code, subtitle: inlineSubtitle };
+      },
+
+      /**
+       * Verifica se uma linha inicia um Artigo (Art. 1º, Art. 10., Art. 311-A, Art. 1.026).
+       */
+      matchArticleStart(line) {
+        const clean = line.trim();
+        const rx = /^(Art\.?\s*\d+(?:\.\d+)*(?:[º°o])?(?:-[A-Za-z])?\.?)\s*(?:[-–—]\s*)?(.*)$/i;
+        const m = clean.match(rx);
+        if (!m) return null;
+
+        // Padroniza rótulo do artigo (ex: "Art. 1º", "Art. 311-A")
+        let num = m[1].replace(/\s+/g, ' ').replace(/\.$/, '').trim();
+        if (!/^Art\./i.test(num)) num = num.replace(/^Art\s*/i, 'Art. ');
+        const rest = (m[2] || '').trim();
+        return { numero: num, textoInicial: rest };
+      },
+
+      /**
+       * Extrai 100% dos artigos respeitando rigorosamente a hierarquia TÍTULO > CAPÍTULO > SEÇÃO > SUBSEÇÃO.
+       */
+      parse(rawText, options = {}) {
+        const splitLongSections = Boolean(options.splitLongSections);
+        const maxPerChunk = options.maxPerChunk || 12;
+        const defaultBlockSize = options.defaultBlockSize || 8;
+
+        const lines = this.normalizeText(rawText).split('\n').map(l => l.trim());
+        const hierarchy = { 1: null, 2: null, 3: null, 4: null };
+
+        const rawGroups = [];
+        let currentGroup = null;
+        let currentArticle = null;
+        let hasAnyHeading = false;
+
+        const ensureGroup = () => {
+          if (!currentGroup) {
+            currentGroup = {
+              breadcrumb: hasAnyHeading ? this.buildBreadcrumb(hierarchy) : 'LEI SECA',
+              titulo: hasAnyHeading ? this.getActiveTitle(hierarchy) : 'Disposições Iniciais',
+              artigos: []
+            };
+            rawGroups.push(currentGroup);
+          }
+        };
+
+        const flushArticle = () => {
+          if (currentArticle) {
+            currentArticle.textoBruto = currentArticle.linhas.join('\n').trim();
+            delete currentArticle.linhas;
+            ensureGroup();
+            currentGroup.artigos.push(currentArticle);
+            currentArticle = null;
+          }
+        };
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (!line) continue;
+
+          // 1. Verifica se é cabeçalho estrutural
+          const heading = this.matchHeading(line);
+          if (heading) {
+            flushArticle();
+            hasAnyHeading = true;
+
+            // Captura subtítulo na linha imediatamente abaixo, se não veio na mesma linha
+            if (!heading.subtitle && i + 1 < lines.length) {
+              const nextLine = lines[i + 1];
+              if (nextLine && !this.matchHeading(nextLine) && !this.matchArticleStart(nextLine) && nextLine.length <= 160) {
+                heading.subtitle = nextLine;
+                i++;
+              }
+            }
+
+            // Atualiza hierarquia limpando níveis inferiores
+            hierarchy[heading.level] = heading;
+            for (let lvl = heading.level + 1; lvl <= 4; lvl++) {
+              hierarchy[lvl] = null;
+            }
+
+            // Inicia novo grupo estrutural
+            currentGroup = {
+              breadcrumb: this.buildBreadcrumb(hierarchy),
+              titulo: heading.subtitle || heading.code,
+              artigos: []
+            };
+            rawGroups.push(currentGroup);
+            continue;
+          }
+
+          // 2. Verifica se inicia um Artigo
+          const art = this.matchArticleStart(line);
+          if (art) {
+            flushArticle();
+            ensureGroup();
+            currentArticle = {
+              numero: art.numero,
+              linhas: art.textoInicial ? [art.textoInicial] : []
+            };
+            continue;
+          }
+
+          // 3. Continuação do artigo atual (parágrafos, incisos, alíneas, texto corrido)
+          if (currentArticle) {
+            currentArticle.linhas.push(line);
+          }
+        }
+        flushArticle();
+
+        // Remove grupos vazios (ex: TÍTULO seguido imediatamente de CAPÍTULO sem artigos no meio)
+        const nonEmptyGroups = rawGroups.filter(g => g.artigos.length > 0);
+
+        // Constrói trilhas finais garantindo 100% dos artigos mapeados
+        const trilhas = [];
+        let totalArticlesDetected = 0;
+
+        nonEmptyGroups.forEach((group, gIdx) => {
+          totalArticlesDetected += group.artigos.length;
+
+          // Caso 1: Documento sem nenhum cabeçalho estrutural -> fatiar em blocos configuráveis (padrão 8)
+          if (!hasAnyHeading) {
+            for (let start = 0; start < group.artigos.length; start += defaultBlockSize) {
+              const slice = group.artigos.slice(start, start + defaultBlockSize);
+              const partNum = Math.floor(start / defaultBlockSize) + 1;
+              trilhas.push(this.buildTrilhaObject(
+                `imp_${Date.now()}_${gIdx}_${partNum}`,
+                `BLOCO ${partNum}`,
+                `Lei Seca — Parte ${partNum}`,
+                slice
+              ));
+            }
+            return;
+          }
+
+          // Caso 2: Switch opcional "Dividir seções muito longas (>12 artigos)"
+          if (splitLongSections && group.artigos.length > maxPerChunk) {
+            const totalParts = Math.ceil(group.artigos.length / maxPerChunk);
+            for (let start = 0; start < group.artigos.length; start += maxPerChunk) {
+              const slice = group.artigos.slice(start, start + maxPerChunk);
+              const partNum = Math.floor(start / maxPerChunk) + 1;
+              trilhas.push(this.buildTrilhaObject(
+                `imp_${Date.now()}_${gIdx}_${partNum}`,
+                group.breadcrumb,
+                `${group.titulo} (Parte ${partNum}/${totalParts})`,
+                slice
+              ));
+            }
+            return;
+          }
+
+          // Caso 3 (Padrão): Respeita integralmente o limite de cada TÍTULO/CAPÍTULO/SEÇÃO/SUBSEÇÃO
+          trilhas.push(this.buildTrilhaObject(
+            `imp_${Date.now()}_${gIdx}`,
+            group.breadcrumb,
+            group.titulo,
+            group.artigos
+          ));
+        });
+
+        const totalArticlesMapped = trilhas.reduce((acc, t) => acc + t.artigos.length, 0);
+
+        return {
+          trilhas,
+          audit: {
+            totalArticlesDetected,
+            totalArticlesMapped,
+            totalTrilhas: trilhas.length,
+            hasAnyHeading,
+            coveragePercent: totalArticlesDetected > 0 ? Math.round((totalArticlesMapped / totalArticlesDetected) * 100) : 0
+          }
+        };
+      },
+
+      buildBreadcrumb(hierarchy) {
+        return [1, 2, 3, 4]
+          .map(lvl => hierarchy[lvl] ? hierarchy[lvl].code : null)
+          .filter(Boolean)
+          .join(' › ');
+      },
+
+      getActiveTitle(hierarchy) {
+        for (let lvl = 4; lvl >= 1; lvl--) {
+          if (hierarchy[lvl]) return hierarchy[lvl].subtitle || hierarchy[lvl].code;
+        }
+        return 'Disposições Iniciais';
+      },
+
+      buildTrilhaObject(id, breadcrumb, titulo, artigosSlice) {
+        const firstArt = artigosSlice[0]?.numero || '';
+        const lastArt = artigosSlice[artigosSlice.length - 1]?.numero || '';
+        const count = artigosSlice.length;
+        const rangeText = count === 1 ? `${firstArt} • 1 artigo` : `${firstArt} ao ${lastArt} • ${count} artigos`;
+        const tempoLeituraMin = count <= 8 ? 5 : 10;
+
+        return {
+          id,
+          breadcrumb,
+          titulo,
+          subtitulo: rangeText,
+          tempoLeituraMin,
+          selected: true,
+          artigos: artigosSlice.map(a => ({
+            numero: a.numero,
+            textoBruto: a.textoBruto,
+            textoHtml: OfflineGenerator.highlightVunesp(a.textoBruto)
+          })),
+          questoes: []
+        };
+      },
+
+      /**
+       * Formata o texto de um artigo separando visualmente caput, Parágrafo único, §§, incisos e alíneas.
+       */
+      formatArticleBlocks(textoHtml) {
+        if (!textoHtml) return '';
+        // Quebra linhas explícitas e também insere quebras antes de marcadores clássicos caso venham inline
+        const prepared = textoHtml
+          .replace(/\s+(?=(?:Parágrafo\s+único|§\s*\d+[º°]?)\b)/gi, '\n')
+          .replace(/\s+(?=[IVXLCDM]+\s*[-–—]\s)/g, '\n')
+          .replace(/\s+(?=[a-z]\)\s)/g, '\n');
+
+        const lines = prepared.split('\n').map(l => l.trim()).filter(Boolean);
+
+        return lines.map((line, idx) => {
+          if (idx === 0) {
+            return `<p class="text-slate-800 dark:text-slate-100 leading-relaxed font-normal">${line}</p>`;
+          }
+          if (/^(Parágrafo\s+único|§\s*\d+[º°]?)/i.test(line)) {
+            return `<p class="mt-2.5 pl-3 border-l-2 border-indigo-300 dark:border-indigo-700 text-slate-700 dark:text-slate-200 leading-relaxed">${line}</p>`;
+          }
+          if (/^[IVXLCDM]+\s*[-–—]/i.test(line)) {
+            return `<p class="mt-1.5 pl-5 text-slate-700 dark:text-slate-200 leading-relaxed">${line}</p>`;
+          }
+          if (/^[a-z]\)\s/i.test(line)) {
+            return `<p class="mt-1 pl-9 text-slate-600 dark:text-slate-300 leading-relaxed">${line}</p>`;
+          }
+          return `<p class="mt-2 text-slate-700 dark:text-slate-200 leading-relaxed">${line}</p>`;
+        }).join('');
+      }
+    };
+
+    /* ============================================================================
+       3. GERADOR OFFLINE E INTEGRAÇÃO OPCIONAL COM API GEMINI (gemini-2.5-flash)
+       ============================================================================ */
+    const OfflineGenerator = {
+      highlightVunesp(text) {
+        const escaped = text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+
+        const rx = /\b(\d+\s*(?:\([^)]+\)\s*)?(?:dias?|meses?|mês|anos?|horas?|minutos?|por cento|%)|salvo|exceto|vedad[oa]s?|proibid[oa]s?|obrigatóri[oa]s?|facultativ[oa]s?|reclusão|detenção|extingue a punibilidade|sem prejuízo|improrrogável|prorrogável|exclusivamente|unicamente)\b/gi;
+        return escaped.replace(rx, '<mark>$1</mark>');
+      },
+
+      generateQuestionsForTrilha(trilha) {
+        const questions = [];
+        const artigos = trilha.artigos;
+        const swapPairs = [
+          ['vedado', 'permitido'], ['proibido', 'permitido'], ['obrigatório', 'facultativo'],
+          ['facultativo', 'obrigatório'], ['reclusão', 'detenção'], ['detenção', 'reclusão'],
+          ['salvo', 'inclusive'], ['exceto', 'inclusive'], ['sem prejuízo', 'com prejuízo']
+        ];
+
+        artigos.slice(0, 6).forEach((art, idx) => {
+          const cleanText = (art.textoBruto || art.textoHtml.replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim();
+          const shortSnippet = cleanText.length > 220 ? cleanText.slice(0, 220).trim() + '...' : cleanText;
+
+          // 1. Tenta Cloze em prazo ou palavra-chave
+          const keyMatch = shortSnippet.match(/\b(\d+\s*(?:dias?|meses?|anos?)|vedado|proibido|obrigatório|facultativo|reclusão|detenção|salvo|exceto)\b/i);
+          if (keyMatch && idx % 2 === 0) {
+            const target = keyMatch[1];
+            const enunciado = shortSnippet.replace(target, '_____');
+            let distractors = ['vedado', 'facultativo', 'obrigatório', 'exceto'];
+            if (/\d+/.test(target)) {
+              const num = parseInt(target, 10);
+              const unit = target.replace(/\d+\s*/, '');
+              distractors = [
+                `${Math.max(1, num - 5)} ${unit}`,
+                `${num + 5} ${unit}`,
+                `${num * 2} ${unit}`
+              ];
+            }
+            const opcoes = Array.from(new Set([target, ...distractors])).slice(0, 4).sort(() => Math.random() - 0.5);
+            questions.push({
+              id: `${trilha.id}_off_q${idx + 1}`,
+              tipo: 'cloze',
+              artigoRef: art.numero,
+              enunciado: `(${art.numero}) ${enunciado}`,
+              opcoes,
+              respostaCorreta: target,
+              textoLiteral: `${art.numero} - ${art.textoHtml}`,
+              dicaVunesp: 'Atenção à literalidade de prazos e palavras-chave cobradas pela VUNESP.'
+            });
+            return;
+          }
+
+          // 2. Certo ou Errado (com troca sutil quando possível)
+          let statement = shortSnippet;
+          let isTrue = true;
+          for (const [a, b] of swapPairs) {
+            const r = new RegExp(`\\b${a}\\b`, 'i');
+            if (r.test(statement)) {
+              statement = statement.replace(r, b);
+              isTrue = false;
+              break;
+            }
+          }
+          questions.push({
+            id: `${trilha.id}_off_q${idx + 1}`,
+            tipo: 'true_false',
+            artigoRef: art.numero,
+            enunciado: `Segundo o ${art.numero}: "${statement}"`,
+            respostaCorreta: isTrue,
+            textoLiteral: `${art.numero} - ${art.textoHtml}`,
+            dicaVunesp: isTrue
+              ? 'Redação fiel à lei seca. Memorize os termos destacados.'
+              : 'Pegadinha clássica: a banca inverteu um termo restritivo/permissivo do artigo.'
+          });
+        });
+
+        return questions;
+      }
+    };
+
+    const GeminiGenerator = {
+      async generateForTrilha(trilha, apiKey) {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const articlesText = trilha.artigos.map(a => `${a.numero} - ${a.textoBruto || a.textoHtml.replace(/<[^>]+>/g, '')}`).join('\n\n');
+
+        const prompt = `Atue como especialista na banca VUNESP (Escrevente TJSP).
+Com base EXCLUSIVAMENTE nos artigos abaixo, gere um JSON válido (sem markdown, apenas o objeto JSON) contendo um array "questoes" com 3 a 6 questões distribuídas entre "true_false", "cloze" e "multiple_choice".
+Formato obrigatório:
+{
+  "questoes": [
+    {
+      "id": "${trilha.id}_q1",
+      "tipo": "true_false",
+      "artigoRef": "Art. X",
+      "enunciado": "Afirmação para julgar",
+      "respostaCorreta": false,
+      "textoLiteral": "Art. X - texto com <mark>destaque</mark>",
+      "dicaVunesp": "Explicação curta"
+    },
+    {
+      "id": "${trilha.id}_q2",
+      "tipo": "cloze",
+      "artigoRef": "Art. Y",
+      "enunciado": "Frase com _____ oculta",
+      "opcoes": ["op1", "op2", "op3", "op4"],
+      "respostaCorreta": "op1",
+      "textoLiteral": "Art. Y - texto com <mark>op1</mark>",
+      "dicaVunesp": "Explicação curta"
+    },
+    {
+      "id": "${trilha.id}_q3",
+      "tipo": "multiple_choice",
+      "artigoRef": "Art. Z",
+      "enunciado": "Pergunta objetiva?",
+      "opcoes": ["A", "B", "C", "D"],
+      "respostaCorreta": 0,
+      "textoLiteral": "Art. Z - texto com <mark>destaque</mark>",
+      "dicaVunesp": "Explicação curta"
+    }
+  ]
+}
+
+ARTIGOS:
+${articlesText}`;
+
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json', temperature: 0.3 }
+          })
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const cleaned = rawText.replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (!Array.isArray(parsed.questoes) || parsed.questoes.length === 0) {
+          throw new Error('JSON sem questões válidas');
+        }
+        return parsed.questoes;
+      }
+    };
+
+    /* ============================================================================
+       4. ESTADO GLOBAL E PERSISTÊNCIA (LOCALSTORAGE)
+       ============================================================================ */
+    const StateStore = {
+      state: null,
+      customTrilhas: {},
+
+      defaultState() {
+        return {
+          theme: 'light',
+          activeTab: 'trilhas',
+          selectedDisciplinaId: 'penal',
+          xp: 0,
+          streak: 0,
+          lastStudyDate: null,
+          simOffsetDays: 0,
+          fontSize: 15,
+          showMarks: true,
+          completedTrilhas: {}, // { [trilhaId]: { completedAt, bestScore: 100 } }
+          srs: {},              // { [questionId]: { nextReview, interval, ease, reps, disciplinaId, trilhaId } }
+          errorBook: {}         // { [questionId]: { count, lastWrong, disciplinaId, trilhaId } }
+        };
+      },
+
+      load() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.STATE) || 'null');
+          this.state = { ...this.defaultState(), ...(saved || {}) };
+        } catch {
+          this.state = this.defaultState();
+        }
+        try {
+          this.customTrilhas = JSON.parse(localStorage.getItem(STORAGE_KEYS.CUSTOM_TRILHAS) || '{}');
+        } catch {
+          this.customTrilhas = {};
+        }
+      },
+
+      save() {
+        localStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(this.state));
+        localStorage.setItem(STORAGE_KEYS.CUSTOM_TRILHAS, JSON.stringify(this.customTrilhas));
+      },
+
+      getTodayKey() {
+        const d = new Date();
+        d.setDate(d.getDate() + (this.state.simOffsetDays || 0));
+        return d.toISOString().slice(0, 10);
+      },
+
+      addDaysToKey(baseKey, days) {
+        const d = new Date(baseKey + 'T12:00:00');
+        d.setDate(d.getDate() + days);
+        return d.toISOString().slice(0, 10);
+      },
+
+      getAllDisciplinas() {
+        return BASE_DISCIPLINAS.map(disc => ({
+          ...disc,
+          trilhas: [...disc.trilhas, ...(this.customTrilhas[disc.id] || [])]
+        }));
+      },
+
+      findQuestionById(qId) {
+        for (const d of this.getAllDisciplinas()) {
+          for (const t of d.trilhas) {
+            const q = (t.questoes || []).find(item => item.id === qId);
+            if (q) return { question: q, trilha: t, disciplina: d };
+          }
+        }
+        return null;
+      },
+
+      registerStudyActivity(xpGain = 10) {
+        const today = this.getTodayKey();
+        if (this.state.lastStudyDate !== today) {
+          const yesterday = this.addDaysToKey(today, -1);
+          this.state.streak = this.state.lastStudyDate === yesterday ? this.state.streak + 1 : 1;
+          this.state.lastStudyDate = today;
+        }
+        this.state.xp += xpGain;
+        this.save();
+      },
+
+      scheduleSrs(qId, rating, meta = {}) {
+        const today = this.getTodayKey();
+        const prev = this.state.srs[qId] || { interval: 0, ease: 2.5, reps: 0 };
+        let interval = 1;
+        let ease = prev.ease;
+        let reps = prev.reps;
+
+        if (rating === 'again') { interval = 0; reps = 0; ease = Math.max(1.3, ease - 0.2); }
+        else if (rating === 'hard') { interval = 1; reps += 1; ease = Math.max(1.3, ease - 0.15); }
+        else if (rating === 'good') { interval = reps === 0 ? 3 : Math.round(Math.max(3, prev.interval * ease)); reps += 1; }
+        else if (rating === 'easy') { interval = reps === 0 ? 7 : Math.round(Math.max(7, prev.interval * ease * 1.3)); reps += 1; ease += 0.15; }
+
+        this.state.srs[qId] = {
+          nextReview: this.addDaysToKey(today, interval),
+          interval,
+          ease,
+          reps,
+          disciplinaId: meta.disciplinaId || prev.disciplinaId,
+          trilhaId: meta.trilhaId || prev.trilhaId
+        };
+        this.save();
+      },
+
+      getDueReviews() {
+        const today = this.getTodayKey();
+        const list = [];
+        Object.entries(this.state.srs).forEach(([qId, info]) => {
+          if (info.nextReview <= today) {
+            const found = this.findQuestionById(qId);
+            if (found) list.push({ ...found, srs: info });
+          }
+        });
+        return list;
+      }
+    };
+
+    /* ============================================================================
+       5. CONTROLADOR DO IMPORTADOR (DOCX + TEXTO + AUDITORIA)
+       ============================================================================ */
+    const ImportController = {
+      selectedDisciplinaId: 'cf88',
+      rawText: '',
+      fileName: '',
+      splitLongSections: false,
+      defaultBlockSize: 8,
+      parsedResult: null,
+      isGenerating: false,
+
+      resetPreview() {
+        this.parsedResult = null;
+        this.rawText = '';
+        this.fileName = '';
+      },
+
+      async handleFileUpload(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        this.fileName = file.name;
+
+        try {
+          if (file.name.toLowerCase().endsWith('.docx')) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            this.rawText = result.value || '';
+          } else {
+            this.rawText = await file.text();
+          }
+          this.runParse();
+          UI.toast(`Arquivo "${file.name}" lido com sucesso!`, '📄');
+        } catch (err) {
+          UI.toast('Erro ao ler o arquivo. Tente novamente ou cole o texto.', '⚠️');
+        }
+      },
+
+      handlePasteParse() {
+        const textarea = document.getElementById('import-paste-area');
+        if (!textarea || !textarea.value.trim()) {
+          UI.toast('Cole o texto literal da lei primeiro.', '⚠️');
+          return;
+        }
+        this.fileName = 'Texto colado manualmente';
+        this.rawText = textarea.value;
+        this.runParse();
+      },
+
+      toggleSplitLong(checked) {
+        this.splitLongSections = checked;
+        if (this.rawText) this.runParse();
+      },
+
+      updateBlockSize(val) {
+        this.defaultBlockSize = Math.max(3, Math.min(20, parseInt(val, 10) || 8));
+        if (this.rawText) this.runParse();
+      },
+
+      runParse() {
+        this.parsedResult = LawParser.parse(this.rawText, {
+          splitLongSections: this.splitLongSections,
+          maxPerChunk: 12,
+          defaultBlockSize: this.defaultBlockSize
+        });
+        AppController.render();
+      },
+
+      toggleTrilhaSelection(idx) {
+        if (!this.parsedResult?.trilhas[idx]) return;
+        this.parsedResult.trilhas[idx].selected = !this.parsedResult.trilhas[idx].selected;
+        AppController.render();
+      },
+
+      async saveImportedTrilhas(mode) {
+        if (!this.parsedResult || this.isGenerating) return;
+        const chosen = this.parsedResult.trilhas.filter(t => t.selected);
+        if (chosen.length === 0) {
+          UI.toast('Selecione pelo menos 1 trilha para importar.', '⚠️');
+          return;
+        }
+
+        const apiKey = localStorage.getItem(STORAGE_KEYS.GEMINI_KEY) || '';
+        const useGemini = mode === 'gemini' && apiKey.trim().length > 10;
+
+        this.isGenerating = true;
+        const statusBox = document.getElementById('import-progress-box');
+        const statusText = document.getElementById('import-progress-text');
+        const statusBar = document.getElementById('import-progress-bar');
+        if (statusBox) statusBox.classList.remove('hidden');
+
+        const discId = this.selectedDisciplinaId;
+        if (!StateStore.customTrilhas[discId]) StateStore.customTrilhas[discId] = [];
+
+        let fallbackCount = 0;
+
+        for (let i = 0; i < chosen.length; i++) {
+          const trilha = { ...chosen[i] };
+          delete trilha.selected;
+
+          if (statusText) statusText.textContent = `Processando trilha ${i + 1} de ${chosen.length}: ${trilha.titulo}`;
+          if (statusBar) statusBar.style.width = `${Math.round(((i + 1) / chosen.length) * 100)}%`;
+
+          if (useGemini) {
+            try {
+              trilha.questoes = await GeminiGenerator.generateForTrilha(trilha, apiKey);
+            } catch {
+              fallbackCount++;
+              trilha.questoes = OfflineGenerator.generateQuestionsForTrilha(trilha);
+            }
+          } else {
+            trilha.questoes = OfflineGenerator.generateQuestionsForTrilha(trilha);
+          }
+
+          StateStore.customTrilhas[discId].push(trilha);
+        }
+
+        StateStore.save();
+        this.isGenerating = false;
+        this.resetPreview();
+        StateStore.state.selectedDisciplinaId = discId;
+        AppController.switchTab('trilhas');
+
+        if (fallbackCount > 0) {
+          UI.toast(`${chosen.length} trilhas salvas (${fallbackCount} em modo offline por limite/erro na API).`, '⚡');
+        } else {
+          UI.toast(`${chosen.length} trilhas importadas com 100% dos artigos!`, '🎉');
+        }
+      },
+
+      deleteCustomTrilha(discId, trilhaId) {
+        UI.confirm('Excluir trilha importada?', 'Os artigos e questões desta trilha serão removidos do seu dispositivo.', () => {
+          StateStore.customTrilhas[discId] = (StateStore.customTrilhas[discId] || []).filter(t => t.id !== trilhaId);
+          StateStore.save();
+          AppController.render();
+          UI.toast('Trilha removida.', '🗑️');
+        });
+      }
+    };
+
+    /* ============================================================================
+       6. PLAYER FULL-FOCUS (FASE 1: LEITURA CRONOMETRADA | FASE 2: ARENA DE GAMES | SRS)
+       ============================================================================ */
+    const PlayerController = {
+      active: false,
+      mode: null, // 'reading' | 'game' | 'srs'
+      disciplina: null,
+      trilha: null,
+      timerSeconds: 0,
+      timerInterval: null,
+      timerRunning: false,
+      questions: [],
+      qIndex: 0,
+      correctCount: 0,
+      answered: false,
+      lastCorrect: false,
+
+      startTrilha(disciplinaId, trilhaId) {
+        const disc = StateStore.getAllDisciplinas().find(d => d.id === disciplinaId);
+        const trilha = disc?.trilhas.find(t => t.id === trilhaId);
+        if (!disc || !trilha) return;
+
+        this.active = true;
+        this.mode = 'reading';
+        this.disciplina = disc;
+        this.trilha = trilha;
+        this.timerSeconds = (trilha.tempoLeituraMin || 5) * 60;
+        this.timerRunning = false;
+        this.stopTimer();
+
+        AppController.render();
+      },
+
+      startGamePhase() {
+        this.stopTimer();
+        this.mode = 'game';
+        this.questions = [...(this.trilha.questoes || [])];
+        this.qIndex = 0;
+        this.correctCount = 0;
+        this.answered = false;
+        AppController.render();
+      },
+
+      startSrsSession(items) {
+        if (!items || items.length === 0) return;
+        this.active = true;
+        this.mode = 'srs';
+        this.disciplina = null;
+        this.trilha = null;
+        this.questions = items;
+        this.qIndex = 0;
+        this.correctCount = 0;
+        this.answered = false;
+        AppController.render();
+      },
+
+      toggleTimer() {
+        if (this.timerRunning) {
+          this.stopTimer();
+        } else {
+          this.timerRunning = true;
+          this.timerInterval = setInterval(() => {
+            if (this.timerSeconds > 0) {
+              this.timerSeconds--;
+              const el = document.getElementById('reading-timer-display');
+              if (el) el.textContent = this.formatClock(this.timerSeconds);
+            } else {
+              this.stopTimer();
+              UI.toast('Tempo concluído! Hora da Arena de Games.', '⏱️');
+            }
+          }, 1000);
+        }
+        AppController.render();
+      },
+
+      resetTimer() {
+        this.stopTimer();
+        this.timerSeconds = (this.trilha?.tempoLeituraMin || 5) * 60;
+        AppController.render();
+      },
+
+      stopTimer() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        this.timerInterval = null;
+        this.timerRunning = false;
+      },
+
+      formatClock(sec) {
+        const m = String(Math.floor(sec / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        return `${m}:${s}`;
+      },
+
+      changeFont(delta) {
+        StateStore.state.fontSize = Math.max(12, Math.min(22, (StateStore.state.fontSize || 15) + delta));
+        StateStore.save();
+        AppController.render();
+      },
+
+      toggleMarks() {
+        StateStore.state.showMarks = !StateStore.state.showMarks;
+        StateStore.save();
+        AppController.render();
+      },
+
+      answerQuestion(userAnswer) {
+        if (this.answered) return;
+        const current = this.mode === 'srs' ? this.questions[this.qIndex].question : this.questions[this.qIndex];
+        const isCorrect = userAnswer === current.respostaCorreta;
+
+        this.answered = true;
+        this.lastCorrect = isCorrect;
+        if (isCorrect) {
+          this.correctCount++;
+          StateStore.registerStudyActivity(15);
+          if (StateStore.state.errorBook[current.id]) {
+            delete StateStore.state.errorBook[current.id];
+            StateStore.save();
+          }
+        } else {
+          const meta = this.mode === 'srs'
+            ? { disciplinaId: this.questions[this.qIndex].disciplina.id, trilhaId: this.questions[this.qIndex].trilha.id }
+            : { disciplinaId: this.disciplina.id, trilhaId: this.trilha.id };
+          const prevErr = StateStore.state.errorBook[current.id] || { count: 0 };
+          StateStore.state.errorBook[current.id] = {
+            count: prevErr.count + 1,
+            lastWrong: StateStore.getTodayKey(),
+            ...meta
+          };
+          StateStore.save();
+        }
+
+        AppController.render();
+      },
+
+      rateSrsAndNext(rating) {
+        const item = this.questions[this.qIndex];
+        StateStore.scheduleSrs(item.question.id, rating, {
+          disciplinaId: item.disciplina.id,
+          trilhaId: item.trilha.id
+        });
+        this.nextQuestion();
+      },
+
+      nextQuestion() {
+        this.qIndex++;
+        this.answered = false;
+        AppController.render();
+      },
+
+      finishTrilhaGame() {
+        const total = this.questions.length;
+        const pct = total > 0 ? Math.round((this.correctCount / total) * 100) : 100;
+        if (pct === 100) {
+          StateStore.state.completedTrilhas[this.trilha.id] = {
+            completedAt: StateStore.getTodayKey(),
+            bestScore: 100
+          };
+          // Agenda todas as questões da trilha dominada no SRS (3 dias)
+          this.questions.forEach(q => {
+            StateStore.scheduleSrs(q.id, 'good', { disciplinaId: this.disciplina.id, trilhaId: this.trilha.id });
+          });
+          StateStore.registerStudyActivity(50);
+        }
+        this.exit();
+      },
+
+      requestExit() {
+        UI.confirm('Sair da sessão atual?', 'Seu progresso nesta etapa em andamento não será salvo até concluir.', () => this.exit());
+      },
+
+      exit() {
+        this.stopTimer();
+        this.active = false;
+        this.mode = null;
+        AppController.render();
+      }
+    };
+
+    /* ============================================================================
+       7. UTILITÁRIOS DE UI (TOAST / MODAL)
+       ============================================================================ */
+    const UI = {
+      toastTimeout: null,
+      toast(msg, icon = '✅') {
+        const el = document.getElementById('toast');
+        document.getElementById('toast-msg').textContent = msg;
+        document.getElementById('toast-icon').textContent = icon;
+        el.classList.remove('hidden');
+        clearTimeout(this.toastTimeout);
+        this.toastTimeout = setTimeout(() => el.classList.add('hidden'), 3200);
+      },
+
+      confirm(title, body, onConfirm) {
+        const overlay = document.getElementById('modal-overlay');
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-body').textContent = body;
+        overlay.classList.remove('hidden');
+
+        const cancelBtn = document.getElementById('modal-cancel');
+        const confirmBtn = document.getElementById('modal-confirm');
+
+        const close = () => overlay.classList.add('hidden');
+        cancelBtn.onclick = close;
+        confirmBtn.onclick = () => { close(); onConfirm(); };
+      }
+    };
+
+    /* ============================================================================
+       8. CONTROLADOR PRINCIPAL E RENDERIZAÇÃO DAS 5 ABAS
+       ============================================================================ */
+    const AppController = {
+      init() {
+        StateStore.load();
+        this.applyTheme();
+        this.render();
+      },
+
+      applyTheme() {
+        document.documentElement.classList.toggle('dark', StateStore.state.theme === 'dark');
+      },
+
+      toggleTheme() {
+        StateStore.state.theme = StateStore.state.theme === 'dark' ? 'light' : 'dark';
+        StateStore.save();
+        this.applyTheme();
+      },
+
+      switchTab(tab) {
+        StateStore.state.activeTab = tab;
+        StateStore.save();
+        this.render();
+      },
+
+      selectDisciplina(id) {
+        StateStore.state.selectedDisciplinaId = id;
+        StateStore.save();
+        this.render();
+      },
+
+      advanceSimulatedDate(days) {
+        StateStore.state.simOffsetDays = (StateStore.state.simOffsetDays || 0) + days;
+        StateStore.save();
+        this.render();
+        UI.toast(`Data avançada em +${days} dia(s) para teste de SRS.`, '🧪');
+      },
+
+      resetSimulatedDate() {
+        StateStore.state.simOffsetDays = 0;
+        StateStore.save();
+        this.render();
+        UI.toast('Data restaurada para hoje.', '📅');
+      },
+
+      saveGeminiKey() {
+        const input = document.getElementById('gemini-key-input');
+        if (!input) return;
+        localStorage.setItem(STORAGE_KEYS.GEMINI_KEY, input.value.trim());
+        UI.toast('Chave da API do Gemini salva localmente!', '🔑');
+        this.render();
+      },
+
+      exportBackup() {
+        const payload = {
+          version: 3,
+          exportedAt: new Date().toISOString(),
+          state: StateStore.state,
+          customTrilhas: StateStore.customTrilhas
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `decorei_tjsp_backup_${StateStore.getTodayKey()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        UI.toast('Backup JSON baixado!', '💾');
+      },
+
+      importBackup(event) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const parsed = JSON.parse(e.target.result);
+            if (parsed.state) StateStore.state = { ...StateStore.defaultState(), ...parsed.state };
+            if (parsed.customTrilhas) StateStore.customTrilhas = parsed.customTrilhas;
+            StateStore.save();
+            this.applyTheme();
+            this.render();
+            UI.toast('Backup restaurado com sucesso!', '🎉');
+          } catch {
+            UI.toast('Arquivo JSON inválido.', '⚠️');
+          }
+        };
+        reader.readAsText(file);
+      },
+
+      resetAllData() {
+        UI.confirm('Resetar todo o progresso?', 'Isso apagará XP, ofensiva, revisões SRS e trilhas importadas.', () => {
+          localStorage.removeItem(STORAGE_KEYS.STATE);
+          localStorage.removeItem(STORAGE_KEYS.CUSTOM_TRILHAS);
+          StateStore.load();
+          this.render();
+          UI.toast('Aplicativo resetado.', '🧹');
+        });
+      },
+
+      render() {
+        // Atualiza cabeçalho, badges e banner de simulação
+        document.getElementById('header-streak').textContent = `${StateStore.state.streak}d`;
+        document.getElementById('header-xp').textContent = StateStore.state.xp;
+
+        const simBanner = document.getElementById('sim-banner');
+        if (StateStore.state.simOffsetDays > 0) {
+          simBanner.classList.remove('hidden');
+          document.getElementById('sim-banner-text').textContent = `Simulador SRS: +${StateStore.state.simOffsetDays}d (${StateStore.getTodayKey()})`;
+        } else {
+          simBanner.classList.add('hidden');
+        }
+
+        const dueCount = StateStore.getDueReviews().length;
+        const errCount = Object.keys(StateStore.state.errorBook).length;
+        const bRev = document.getElementById('badge-revisoes');
+        const bErr = document.getElementById('badge-erros');
+        bRev.textContent = dueCount;
+        bRev.classList.toggle('hidden', dueCount === 0);
+        bErr.textContent = errCount;
+        bErr.classList.toggle('hidden', errCount === 0);
+
+        const mainHeader = document.getElementById('main-header');
+        const playerHeader = document.getElementById('player-header');
+        const bottomNav = document.getElementById('bottom-nav');
+        const mainContent = document.getElementById('main-content');
+
+        if (PlayerController.active) {
+          mainHeader.classList.add('hidden');
+          bottomNav.classList.add('hidden');
+          playerHeader.classList.remove('hidden');
+          mainContent.classList.remove('pb-24');
+          mainContent.classList.add('pb-8');
+          mainContent.innerHTML = this.renderPlayer();
+          return;
+        }
+
+        mainHeader.classList.remove('hidden');
+        bottomNav.classList.remove('hidden');
+        playerHeader.classList.add('hidden');
+        mainContent.classList.add('pb-24');
+
+        // Atualiza destaque da aba ativa
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+          const isActive = btn.dataset.tab === StateStore.state.activeTab;
+          btn.className = `nav-btn relative flex flex-col items-center justify-center py-1.5 rounded-xl text-[10px] font-bold transition ${
+            isActive
+              ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50'
+              : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+          }`;
+        });
+
+        const tab = StateStore.state.activeTab;
+        if (tab === 'trilhas') mainContent.innerHTML = this.renderTrilhasTab();
+        else if (tab === 'revisoes') mainContent.innerHTML = this.renderRevisoesTab();
+        else if (tab === 'importar') mainContent.innerHTML = this.renderImportarTab();
+        else if (tab === 'erros') mainContent.innerHTML = this.renderErrosTab();
+        else if (tab === 'ajustes') mainContent.innerHTML = this.renderAjustesTab();
+      },
+
+      /* -------------------- ABA 1: TRILHAS -------------------- */
+      renderTrilhasTab() {
+        const disciplinas = StateStore.getAllDisciplinas();
+        const activeDisc = disciplinas.find(d => d.id === StateStore.state.selectedDisciplinaId) || disciplinas[0];
+        const completedMap = StateStore.state.completedTrilhas;
+
+        const totalTrilhasAll = disciplinas.reduce((a, d) => a + d.trilhas.length, 0);
+        const totalDoneAll = disciplinas.reduce((a, d) => a + d.trilhas.filter(t => completedMap[t.id]).length, 0);
+        const globalPct = totalTrilhasAll > 0 ? Math.round((totalDoneAll / totalTrilhasAll) * 100) : 0;
+
+        const discPills = disciplinas.map(d => {
+          const active = d.id === activeDisc.id;
+          return `
+            <button onclick="AppController.selectDisciplina('${d.id}')" class="shrink-0 px-3.5 py-2 rounded-2xl text-xs font-bold border transition ${
+              active
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-600/30'
+                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+            }">
+              ${d.nome} <span class="opacity-75 ml-1">(${d.trilhas.length})</span>
+            </button>
+          `;
+        }).join('');
+
+        let trilhasHtml = '';
+        if (activeDisc.trilhas.length === 0) {
+          trilhasHtml = `
+            <div class="bg-white dark:bg-slate-800/80 border border-dashed border-slate-300 dark:border-slate-700 rounded-3xl p-6 text-center">
+              <div class="text-3xl mb-2">📂</div>
+              <h3 class="text-sm font-extrabold text-slate-900 dark:text-white mb-1">Nenhuma trilha nesta disciplina</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Suba um arquivo .DOCX ou cole os artigos literais na aba Importar para gerar trilhas automáticas.</p>
+              <button onclick="ImportController.selectedDisciplinaId='${activeDisc.id}'; AppController.switchTab('importar')" class="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition">
+                Importar Lei para ${activeDisc.sigla}
+              </button>
+            </div>
+          `;
+        } else {
+          trilhasHtml = activeDisc.trilhas.map((t, idx) => {
+            const isDone = Boolean(completedMap[t.id]);
+            const prevDone = idx === 0 || Boolean(completedMap[activeDisc.trilhas[idx - 1].id]);
+            const isUnlocked = isDone || prevDone;
+
+            return `
+              <div class="relative pl-6 pb-4 last:pb-0">
+                ${idx < activeDisc.trilhas.length - 1 ? `<div class="absolute left-[11px] top-7 bottom-0 w-0.5 ${isDone ? 'bg-emerald-400 dark:bg-emerald-600' : 'bg-slate-200 dark:bg-slate-700'}"></div>` : ''}
+                <div class="absolute left-0 top-3.5 w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-extrabold border-2 ${
+                  isDone
+                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                    : isUnlocked
+                      ? 'bg-indigo-600 border-indigo-600 text-white'
+                      : 'bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-400'
+                }">
+                  ${isDone ? '✓' : isUnlocked ? idx + 1 : '🔒'}
+                </div>
+
+                <div class="rounded-3xl p-4 border transition ${
+                  isUnlocked
+                    ? 'bg-white dark:bg-slate-800/90 border-slate-200 dark:border-slate-700 shadow-xs'
+                    : 'bg-slate-100/80 dark:bg-slate-900/60 border-slate-200/70 dark:border-slate-800 opacity-70'
+                }">
+                  <div class="flex items-center justify-between gap-2 mb-1.5">
+                    <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate">
+                      ${t.breadcrumb || `ETAPA ${idx + 1}`}
+                    </span>
+                    <span class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      isDone
+                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                    }">
+                      ${isDone ? '✅ 100% Dominado' : `⏱️ ${t.tempoLeituraMin || 5} min`}
+                    </span>
+                  </div>
+
+                  <h3 class="text-sm font-extrabold text-slate-900 dark:text-white leading-snug mb-1">${t.titulo}</h3>
+                  <p class="text-xs font-medium text-slate-500 dark:text-slate-400 mb-3">${t.subtitulo}</p>
+
+                  ${isUnlocked ? `
+                    <button onclick="PlayerController.startTrilha('${activeDisc.id}', '${t.id}')" class="w-full py-2.5 rounded-xl text-xs font-extrabold transition ${
+                      isDone
+                        ? 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
+                        : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm shadow-indigo-600/25'
+                    }">
+                      ${isDone ? 'Rever Leitura e Games' : 'Iniciar Trilha (Leitura + Games)'}
+                    </button>
+                  ` : `
+                    <div class="text-[11px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+                      <span>🔒</span> Conclua a etapa anterior com 100% de acerto para destravar.
+                    </div>
+                  `}
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+
+        return `
+          <div class="space-y-4 animate-fade-in">
+            <!-- Card de Progresso Geral -->
+            <div class="rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-700 text-white p-4 shadow-lg shadow-indigo-600/20">
+              <div class="flex items-center justify-between mb-2">
+                <div>
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-100">Edital TJSP</p>
+                  <h2 class="text-base font-extrabold">Progresso das Trilhas</h2>
+                </div>
+                <span class="text-xl font-black">${globalPct}%</span>
+              </div>
+              <div class="w-full h-2 bg-white/20 rounded-full overflow-hidden mb-2">
+                <div class="h-full bg-white rounded-full transition-all duration-300" style="width: ${globalPct}%"></div>
+              </div>
+              <p class="text-[11px] text-indigo-100 font-medium">${totalDoneAll} de ${totalTrilhasAll} trilhas dominadas • Portão de 100% ativo</p>
+            </div>
+
+            <!-- Seletor de Disciplinas -->
+            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+              ${discPills}
+            </div>
+
+            <!-- Cabeçalho da Disciplina -->
+            <div class="flex items-center justify-between px-1">
+              <div>
+                <h2 class="text-sm font-extrabold text-slate-900 dark:text-white">${activeDisc.nome}</h2>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">${activeDisc.edital}</p>
+              </div>
+            </div>
+
+            <!-- Mapa Vertical de Trilhas -->
+            <div class="pt-1">${trilhasHtml}</div>
+          </div>
+        `;
+      },
+
+      /* -------------------- ABA 2: REVISÕES SRS -------------------- */
+      renderRevisoesTab() {
+        const due = StateStore.getDueReviews();
+        const totalScheduled = Object.keys(StateStore.state.srs).length;
+
+        return `
+          <div class="space-y-4 animate-fade-in">
+            <div class="rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-5 text-center">
+              <div class="w-12 h-12 mx-auto rounded-2xl ${due.length > 0 ? 'bg-rose-100 dark:bg-rose-950 text-rose-600' : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600'} flex items-center justify-center text-2xl mb-3">
+                ${due.length > 0 ? '⏰' : '✅'}
+              </div>
+              <h2 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">
+                ${due.length > 0 ? `${due.length} revisões pendentes hoje` : 'Tudo revisado por hoje!'}
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                ${totalScheduled} cartões ativos no motor de repetição espaçada (SM-2).
+              </p>
+              ${due.length > 0 ? `
+                <button onclick="PlayerController.startSrsSession(StateStore.getDueReviews())" class="w-full py-3 rounded-2xl bg-indigo-600 text-white text-xs font-extrabold hover:bg-indigo-700 shadow-md shadow-indigo-600/25 transition">
+                  Iniciar Revisão Espaçada (${due.length})
+                </button>
+              ` : `
+                <p class="text-[11px] text-slate-400">Domine trilhas para alimentar o SRS ou avance a data na aba Ajustes para testar.</p>
+              `}
+            </div>
+          </div>
+        `;
+      },
+
+      /* -------------------- ABA 3: IMPORTAR DOCX / TEXTO -------------------- */
+      renderImportarTab() {
+        const disciplinas = StateStore.getAllDisciplinas();
+        const hasGeminiKey = Boolean((localStorage.getItem(STORAGE_KEYS.GEMINI_KEY) || '').trim());
+        const parsed = ImportController.parsedResult;
+
+        const discOptions = disciplinas.map(d =>
+          `<option value="${d.id}" ${d.id === ImportController.selectedDisciplinaId ? 'selected' : ''}>${d.nome} (${d.sigla})</option>`
+        ).join('');
+
+        // Lista de trilhas importadas para gerenciamento
+        const customListHtml = disciplinas.map(d => {
+          const list = StateStore.customTrilhas[d.id] || [];
+          if (list.length === 0) return '';
+          return `
+            <div class="space-y-2">
+              <p class="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">${d.nome}</p>
+              ${list.map(t => `
+                <div class="flex items-center justify-between gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-2.5">
+                  <div class="min-w-0">
+                    <p class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 truncate">${t.breadcrumb || 'IMPORTADA'}</p>
+                    <p class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${t.titulo}</p>
+                    <p class="text-[11px] text-slate-500">${t.subtitulo}</p>
+                  </div>
+                  <button onclick="ImportController.deleteCustomTrilha('${d.id}', '${t.id}')" class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition shrink-0" title="Excluir trilha">
+                    🗑️
+                  </button>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }).filter(Boolean).join('');
+
+        return `
+          <div class="space-y-4 animate-fade-in">
+            <!-- Passo 1: Upload DOCX ou Colar Texto -->
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-4 space-y-3">
+              <div>
+                <h2 class="text-sm font-extrabold text-slate-900 dark:text-white">Importar Lei Seca (DOCX / Texto)</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400">Divisão hierárquica automática por TÍTULO, CAPÍTULO, SEÇÃO, SUBSEÇÃO e Artigos com 0% de perda.</p>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Disciplina de destino</label>
+                <select onchange="ImportController.selectedDisciplinaId = this.value" class="w-full rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs font-bold">
+                  ${discOptions}
+                </select>
+              </div>
+
+              <!-- Upload DOCX -->
+              <label class="flex flex-col items-center justify-center border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-2xl p-5 bg-indigo-50/50 dark:bg-indigo-950/20 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition">
+                <span class="text-2xl mb-1">📄</span>
+                <span class="text-xs font-extrabold text-indigo-700 dark:text-indigo-300">Tocar para enviar arquivo .DOCX ou .TXT</span>
+                <span class="text-[11px] text-slate-500 mt-0.5">${ImportController.fileName || 'Processamento 100% local via mammoth.js'}</span>
+                <input type="file" accept=".docx,.txt" onchange="ImportController.handleFileUpload(event)" class="hidden" />
+              </label>
+
+              <!-- Colar Texto Manualmente -->
+              <details class="rounded-2xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700 p-3">
+                <summary class="text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer">Ou colar texto literal da lei manualmente</summary>
+                <textarea id="import-paste-area" rows="5" placeholder="Cole aqui TÍTULO, CAPÍTULO, SEÇÃO e Art. 1º..." class="mt-2.5 w-full rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2.5 text-xs leading-relaxed">${ImportController.rawText}</textarea>
+                <button onclick="ImportController.handlePasteParse()" class="mt-2 w-full py-2.5 rounded-xl bg-slate-900 dark:bg-indigo-600 text-white text-xs font-extrabold">
+                  Analisar Texto Colado
+                </button>
+              </details>
+            </div>
+
+            <!-- Passo 2: Painel de Auditoria e Prévia das Trilhas -->
+            ${parsed ? `
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-4 space-y-3.5 animate-fade-in">
+                <!-- Painel de Auditoria -->
+                <div class="rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 p-3.5">
+                  <div class="flex items-center justify-between gap-2 mb-2">
+                    <span class="text-xs font-extrabold text-emerald-800 dark:text-emerald-300">Auditoria de Extração</span>
+                    <span class="px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-extrabold">
+                      ✓ ${parsed.audit.coveragePercent}% dos artigos mapeados
+                    </span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2 text-center">
+                    <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl p-2">
+                      <p class="text-lg font-black text-slate-900 dark:text-white">${parsed.audit.totalArticlesDetected}</p>
+                      <p class="text-[10px] font-bold text-slate-500">Artigos detectados</p>
+                    </div>
+                    <div class="bg-white/80 dark:bg-slate-900/60 rounded-xl p-2">
+                      <p class="text-lg font-black text-indigo-600 dark:text-indigo-400">${parsed.audit.totalTrilhas}</p>
+                      <p class="text-[10px] font-bold text-slate-500">Trilhas geradas</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Switch Opcional: Dividir seções muito longas (>12 artigos) -->
+                <div class="flex items-center justify-between gap-3 px-1">
+                  <div>
+                    <p class="text-xs font-bold text-slate-800 dark:text-slate-100">Dividir seções muito longas (&gt;12 artigos)</p>
+                    <p class="text-[10px] text-slate-500">Desligado por padrão para manter cada TÍTULO/CAPÍTULO/SEÇÃO intacto.</p>
+                  </div>
+                  <input type="checkbox" ${ImportController.splitLongSections ? 'checked' : ''} onchange="ImportController.toggleSplitLong(this.checked)" class="w-5 h-5 accent-indigo-600 rounded cursor-pointer shrink-0" />
+                </div>
+
+                ${!parsed.audit.hasAnyHeading ? `
+                  <div class="flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900 rounded-xl p-2.5">
+                    <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">Sem cabeçalhos detectados — artigos por bloco:</span>
+                    <input type="number" min="3" max="20" value="${ImportController.defaultBlockSize}" onchange="ImportController.updateBlockSize(this.value)" class="w-16 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-1 text-xs font-extrabold text-center" />
+                  </div>
+                ` : ''}
+
+                <!-- Lista de Trilhas Detectadas -->
+                <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  ${parsed.trilhas.map((t, idx) => `
+                    <label class="flex items-start gap-2.5 p-3 rounded-2xl border cursor-pointer transition ${
+                      t.selected
+                        ? 'bg-indigo-50/60 dark:bg-indigo-950/30 border-indigo-200 dark:border-indigo-800'
+                        : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 opacity-60'
+                    }">
+                      <input type="checkbox" ${t.selected ? 'checked' : ''} onchange="ImportController.toggleTrilhaSelection(${idx})" class="mt-1 w-4 h-4 accent-indigo-600 shrink-0" />
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center justify-between gap-2">
+                          <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate">${t.breadcrumb}</span>
+                          <span class="text-[10px] font-bold text-slate-500 shrink-0">⏱️ ${t.tempoLeituraMin} min</span>
+                        </div>
+                        <p class="text-xs font-extrabold text-slate-900 dark:text-white leading-snug mt-0.5">${t.titulo}</p>
+                        <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">${t.subtitulo}</p>
+                      </div>
+                    </label>
+                  `).join('')}
+                </div>
+
+                <!-- Barra de Progresso da Geração -->
+                <div id="import-progress-box" class="hidden space-y-1.5">
+                  <p id="import-progress-text" class="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">Processando...</p>
+                  <div class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                    <div id="import-progress-bar" class="h-full bg-indigo-600 rounded-full transition-all" style="width: 0%"></div>
+                  </div>
+                </div>
+
+                <!-- Botões de Geração -->
+                <div class="grid grid-cols-1 gap-2 pt-1">
+                  ${hasGeminiKey ? `
+                    <button onclick="ImportController.saveImportedTrilhas('gemini')" class="w-full py-3 rounded-2xl bg-indigo-600 text-white text-xs font-extrabold hover:bg-indigo-700 shadow-md shadow-indigo-600/25 transition">
+                      ✨ Gerar Jogos VUNESP com IA (Gemini 2.5 Flash)
+                    </button>
+                  ` : ''}
+                  <button onclick="ImportController.saveImportedTrilhas('offline')" class="w-full py-3 rounded-2xl ${hasGeminiKey ? 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100' : 'bg-indigo-600 text-white'} text-xs font-extrabold transition">
+                    ⚡ Salvar Trilhas + Jogos Automáticos (Modo Offline)
+                  </button>
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- Gerenciamento de Trilhas Importadas -->
+            ${customListHtml ? `
+              <div class="space-y-3 pt-2">
+                <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-500 px-1">Trilhas Importadas</h3>
+                ${customListHtml}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      },
+
+      /* -------------------- ABA 4: CADERNO DE ERROS -------------------- */
+      renderErrosTab() {
+        const entries = Object.entries(StateStore.state.errorBook)
+          .map(([qId, info]) => {
+            const found = StateStore.findQuestionById(qId);
+            return found ? { ...found, info } : null;
+          })
+          .filter(Boolean);
+
+        return `
+          <div class="space-y-4 animate-fade-in">
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-5 text-center">
+              <div class="text-3xl mb-2">${entries.length > 0 ? '🎯' : '🏆'}</div>
+              <h2 class="text-base font-extrabold text-slate-900 dark:text-white mb-1">
+                ${entries.length > 0 ? `${entries.length} pegadinhas no Caderno de Erros` : 'Caderno de Erros zerado!'}
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                Toda questão errada entra automaticamente aqui até você acertá-la na revisão.
+              </p>
+              ${entries.length > 0 ? `
+                <button onclick="PlayerController.startSrsSession(Object.keys(StateStore.state.errorBook).map(id => StateStore.findQuestionById(id)).filter(Boolean))" class="w-full py-3 rounded-2xl bg-amber-500 text-slate-950 text-xs font-extrabold hover:bg-amber-400 transition">
+                  Treinar Caderno de Erros (${entries.length})
+                </button>
+              ` : ''}
+            </div>
+
+            <div class="space-y-2.5">
+              ${entries.map(e => `
+                <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-3.5">
+                  <div class="flex items-center justify-between gap-2 mb-1">
+                    <span class="text-[10px] font-extrabold uppercase text-amber-600 dark:text-amber-400">${e.disciplina.sigla} • ${e.question.artigoRef}</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-300">${e.info.count}x erro</span>
+                  </div>
+                  <p class="text-xs font-semibold text-slate-800 dark:text-slate-100 leading-relaxed">${e.question.enunciado}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      },
+
+      /* -------------------- ABA 5: AJUSTES -------------------- */
+      renderAjustesTab() {
+        const savedKey = localStorage.getItem(STORAGE_KEYS.GEMINI_KEY) || '';
+        return `
+          <div class="space-y-4 animate-fade-in">
+            <!-- Chave API Gemini -->
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-4 space-y-2.5">
+              <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">🔑 API do Gemini (Opcional)</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Salva apenas no seu navegador para gerar os 3 formatos VUNESP automaticamente ao importar DOCX.</p>
+              <input id="gemini-key-input" type="password" value="${savedKey}" placeholder="AIza..." class="w-full rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2.5 text-xs" />
+              <button onclick="AppController.saveGeminiKey()" class="w-full py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">Salvar Chave</button>
+            </div>
+
+            <!-- Simulador SRS -->
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-4 space-y-2.5">
+              <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">🧪 Simulador de Data (SRS)</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Avance o relógio do app para testar revisões vencidas hoje (${StateStore.getTodayKey()}).</p>
+              <div class="grid grid-cols-3 gap-2">
+                <button onclick="AppController.advanceSimulatedDate(1)" class="py-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-extrabold">+1 dia</button>
+                <button onclick="AppController.advanceSimulatedDate(3)" class="py-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-extrabold">+3 dias</button>
+                <button onclick="AppController.advanceSimulatedDate(7)" class="py-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-extrabold">+7 dias</button>
+              </div>
+            </div>
+
+            <!-- Backup e Restauração -->
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-4 space-y-2.5">
+              <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">💾 Backup Unificado (JSON)</h3>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="AppController.exportBackup()" class="py-2.5 rounded-xl bg-slate-900 dark:bg-slate-700 text-white text-xs font-extrabold">Exportar JSON</button>
+                <label class="py-2.5 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-center text-xs font-extrabold cursor-pointer">
+                  Restaurar JSON
+                  <input type="file" accept=".json" onchange="AppController.importBackup(event)" class="hidden" />
+                </label>
+              </div>
+              <button onclick="AppController.resetAllData()" class="w-full py-2.5 rounded-xl text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">
+                Resetar todo o aplicativo
+              </button>
+            </div>
+          </div>
+        `;
+      },
+
+      /* -------------------- PLAYER FULL-FOCUS -------------------- */
+      renderPlayer() {
+        const headerCenter = document.getElementById('player-header-center');
+        const progressBar = document.getElementById('player-progress-bar');
+
+        // FASE 1: LEITURA ATIVA CRONOMETRADA
+        if (PlayerController.mode === 'reading') {
+          headerCenter.innerHTML = `
+            <p class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate">${PlayerController.trilha.breadcrumb || PlayerController.disciplina.nome}</p>
+            <p class="text-xs font-extrabold text-slate-900 dark:text-white truncate">Fase 1: Leitura Ativa</p>
+          `;
+          progressBar.style.width = '50%';
+
+          const marksClass = StateStore.state.showMarks ? '' : 'hide-marks';
+          const fontSize = StateStore.state.fontSize || 15;
+
+          const articlesHtml = PlayerController.trilha.artigos.map(art => `
+            <article class="bg-white dark:bg-slate-800/95 border border-slate-200/90 dark:border-slate-700/80 rounded-3xl p-4 shadow-xs">
+              <div class="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-100 dark:border-slate-700/70">
+                <span class="inline-flex items-center px-3 py-1 rounded-xl bg-indigo-600 text-white text-xs font-extrabold tracking-tight shadow-xs">
+                  ${art.numero}
+                </span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Lei Seca</span>
+              </div>
+              <div class="law-text" style="font-size: ${fontSize}px;">
+                ${LawParser.formatArticleBlocks(art.textoHtml)}
+              </div>
+            </article>
+          `).join('');
+
+          return `
+            <div class="space-y-4 animate-fade-in ${marksClass}">
+              <!-- Barra de Ferramentas de Leitura + Cronômetro -->
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-3.5 space-y-3">
+                <div>
+                  <h2 class="text-sm font-extrabold text-slate-900 dark:text-white leading-snug">${PlayerController.trilha.titulo}</h2>
+                  <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">${PlayerController.trilha.subtitulo}</p>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-900 rounded-2xl p-2.5">
+                  <div class="flex items-center gap-2">
+                    <span id="reading-timer-display" class="font-mono text-lg font-black text-indigo-600 dark:text-indigo-400">${PlayerController.formatClock(PlayerController.timerSeconds)}</span>
+                    <button onclick="PlayerController.toggleTimer()" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-[11px] font-extrabold">
+                      ${PlayerController.timerRunning ? 'Pausar' : 'Iniciar'}
+                    </button>
+                    <button onclick="PlayerController.resetTimer()" class="p-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs">↺</button>
+                  </div>
+
+                  <div class="flex items-center gap-1">
+                    <button onclick="PlayerController.changeFont(-1)" class="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-extrabold">A-</button>
+                    <button onclick="PlayerController.changeFont(1)" class="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-extrabold">A+</button>
+                  </div>
+                </div>
+
+                <button onclick="PlayerController.toggleMarks()" class="w-full py-2 rounded-xl text-[11px] font-extrabold border transition ${
+                  StateStore.state.showMarks
+                    ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-300'
+                    : 'bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-500'
+                }">
+                  ${StateStore.state.showMarks ? '✨ Destaques VUNESP: LIGADOS' : '👁️ Destaques VUNESP: OCULTOS'}
+                </button>
+              </div>
+
+              <!-- Cartões Individuais de Artigos -->
+              <div class="space-y-3.5">
+                ${articlesHtml}
+              </div>
+
+              <!-- Botão para Fase 2 -->
+              <button onclick="PlayerController.startGamePhase()" class="w-full py-4 rounded-2xl bg-indigo-600 text-white text-sm font-extrabold hover:bg-indigo-700 shadow-lg shadow-indigo-600/25 transition">
+                Concluir Leitura → Arena de Games (${PlayerController.trilha.questoes.length})
+              </button>
+            </div>
+          `;
+        }
+
+        // FASE 2: ARENA DE GAMES OU REVISÃO SRS
+        const total = PlayerController.questions.length;
+        if (PlayerController.qIndex >= total) {
+          progressBar.style.width = '100%';
+          const pct = total > 0 ? Math.round((PlayerController.correctCount / total) * 100) : 100;
+          const passed = pct === 100;
+
+          return `
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 text-center space-y-4 animate-fade-in">
+              <div class="text-5xl">${passed ? '🏆' : '💪'}</div>
+              <div>
+                <h2 class="text-xl font-black text-slate-900 dark:text-white">${pct}% de Acerto</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  ${PlayerController.correctCount} de ${total} questões corretas.
+                </p>
+              </div>
+              ${PlayerController.mode === 'game' ? `
+                <p class="text-xs font-semibold ${passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}">
+                  ${passed
+                    ? 'Trilha dominada! Próxima etapa destravada e artigos enviados ao SRS.'
+                    : 'Você precisa de 100% de acerto para destravar a próxima trilha. Os erros foram para o Caderno de Erros.'}
+                </p>
+                <div class="space-y-2 pt-2">
+                  ${!passed ? `<button onclick="PlayerController.startGamePhase()" class="w-full py-3 rounded-2xl bg-indigo-600 text-white text-xs font-extrabold">Tentar Arena Novamente</button>` : ''}
+                  <button onclick="PlayerController.finishTrilhaGame()" class="w-full py-3 rounded-2xl ${passed ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'} text-xs font-extrabold">
+                    ${passed ? 'Concluir e Voltar às Trilhas' : 'Voltar às Trilhas'}
+                  </button>
+                </div>
+              ` : `
+                <button onclick="PlayerController.exit()" class="w-full py-3 rounded-2xl bg-indigo-600 text-white text-xs font-extrabold">Concluir Sessão</button>
+              `}
+            </div>
+          `;
+        }
+
+        const currentItem = PlayerController.questions[PlayerController.qIndex];
+        const q = PlayerController.mode === 'srs' ? currentItem.question : currentItem;
+        progressBar.style.width = `${Math.round(((PlayerController.qIndex + 1) / total) * 100)}%`;
+
+        headerCenter.innerHTML = `
+          <p class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">${q.artigoRef}</p>
+          <p class="text-xs font-extrabold text-slate-900 dark:text-white">Questão ${PlayerController.qIndex + 1} de ${total}</p>
+        `;
+
+        const tipoBadge = q.tipo === 'true_false' ? 'Certo ou Errado' : q.tipo === 'cloze' ? 'Complete a Lacuna' : 'Múltipla Escolha';
+
+        let optionsHtml = '';
+        if (q.tipo === 'true_false') {
+          optionsHtml = `
+            <div class="grid grid-cols-2 gap-3">
+              <button ${PlayerController.answered ? 'disabled' : ''} onclick="PlayerController.answerQuestion(true)" class="py-4 rounded-2xl border-2 text-sm font-extrabold transition ${
+                PlayerController.answered && q.respostaCorreta === true
+                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-500'
+              }">✓ CERTO</button>
+              <button ${PlayerController.answered ? 'disabled' : ''} onclick="PlayerController.answerQuestion(false)" class="py-4 rounded-2xl border-2 text-sm font-extrabold transition ${
+                PlayerController.answered && q.respostaCorreta === false
+                  ? 'bg-emerald-500 border-emerald-500 text-white'
+                  : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-500'
+              }">✕ ERRADO</button>
+            </div>
+          `;
+        } else if (q.tipo === 'cloze') {
+          optionsHtml = `
+            <div class="grid grid-cols-2 gap-2.5">
+              ${(q.opcoes || []).map(opt => `
+                <button ${PlayerController.answered ? 'disabled' : ''} onclick="PlayerController.answerQuestion(${JSON.stringify(opt).replace(/"/g, '&quot;')})" class="p-3.5 rounded-2xl border-2 text-xs font-extrabold transition ${
+                  PlayerController.answered && opt === q.respostaCorreta
+                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-500'
+                }">${opt}</button>
+              `).join('')}
+            </div>
+          `;
+        } else {
+          optionsHtml = `
+            <div class="space-y-2.5">
+              ${(q.opcoes || []).map((opt, i) => `
+                <button ${PlayerController.answered ? 'disabled' : ''} onclick="PlayerController.answerQuestion(${i})" class="w-full text-left p-3.5 rounded-2xl border-2 text-xs font-bold transition ${
+                  PlayerController.answered && i === q.respostaCorreta
+                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-indigo-500'
+                }">
+                  <span class="opacity-60 mr-2">${String.fromCharCode(65 + i)})</span>${opt}
+                </button>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        const feedbackHtml = PlayerController.answered ? `
+          <div class="rounded-3xl p-4 border space-y-3 animate-fade-in ${
+            PlayerController.lastCorrect
+              ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800'
+              : 'bg-rose-50 dark:bg-rose-950/40 border-rose-300 dark:border-rose-800'
+          }">
+            <p class="text-xs font-black ${PlayerController.lastCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}">
+              ${PlayerController.lastCorrect ? '✅ Resposta Correta!' : '❌ Atenção à Pegadinha VUNESP!'}
+            </p>
+            <div class="law-text bg-white/80 dark:bg-slate-900/70 rounded-2xl p-3 text-xs leading-relaxed text-slate-800 dark:text-slate-100">
+              ${q.textoLiteral}
+            </div>
+            <p class="text-[11px] font-semibold text-slate-600 dark:text-slate-300">💡 ${q.dicaVunesp}</p>
+
+            ${PlayerController.mode === 'srs' ? `
+              <div class="grid grid-cols-4 gap-1.5 pt-1">
+                <button onclick="PlayerController.rateSrsAndNext('again')" class="py-2 rounded-xl bg-rose-600 text-white text-[10px] font-extrabold">Errei<br/>Hoje</button>
+                <button onclick="PlayerController.rateSrsAndNext('hard')" class="py-2 rounded-xl bg-amber-500 text-slate-950 text-[10px] font-extrabold">Difícil<br/>1d</button>
+                <button onclick="PlayerController.rateSrsAndNext('good')" class="py-2 rounded-xl bg-indigo-600 text-white text-[10px] font-extrabold">Bom<br/>3d</button>
+                <button onclick="PlayerController.rateSrsAndNext('easy')" class="py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-extrabold">Fácil<br/>7d+</button>
+              </div>
+            ` : `
+              <button onclick="PlayerController.nextQuestion()" class="w-full py-3 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-extrabold">
+                Próxima Questão →
+              </button>
+            `}
+          </div>
+        ` : '';
+
+        return `
+          <div class="space-y-4 animate-fade-in">
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-5 space-y-3">
+              <span class="inline-block px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 text-[10px] font-extrabold uppercase tracking-wider">${tipoBadge}</span>
+              <p class="text-sm font-bold text-slate-900 dark:text-white leading-relaxed">${q.enunciado}</p>
+            </div>
+
+            ${optionsHtml}
+            ${feedbackHtml}
+          </div>
+        `;
+      }
+    };
+
+    window.addEventListener('DOMContentLoaded', () => AppController.init());
+  </script>
+</body>
+</html>
