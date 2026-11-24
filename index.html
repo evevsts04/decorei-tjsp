@@ -49,7 +49,7 @@
     }
     .animate-fade-in { animation: fadeSlideUp 0.2s ease-out forwards; }
 
-    /* Destaques de pegadinhas VUNESP */
+    /* Destaques cirúrgicos de pegadinhas VUNESP (4 categorias + genérico) */
     .law-text mark {
       background-color: #fef08a;
       color: #1e293b;
@@ -61,11 +61,51 @@
       background-color: rgba(234, 179, 8, 0.28);
       color: #fef08a;
     }
+    /* 1. [EXCEÇÃO / RESTRIÇÃO] — Rosa / Vermelho suave */
+    .law-text mark.hl-excecao {
+      background-color: #ffe4e6;
+      color: #9f1239;
+    }
+    .dark .law-text mark.hl-excecao {
+      background-color: rgba(244, 63, 94, 0.26);
+      color: #fda4af;
+    }
+    /* 2. [PRAZO / NÚMERO / QUÓRUM] — Âmbar / Amarelo suave */
+    .law-text mark.hl-prazo {
+      background-color: #fef3c7;
+      color: #92400e;
+    }
+    .dark .law-text mark.hl-prazo {
+      background-color: rgba(245, 158, 11, 0.26);
+      color: #fcd34d;
+    }
+    /* 3. [COMPETÊNCIA / SUJEITO] — Azul suave */
+    .law-text mark.hl-competencia {
+      background-color: #dbeafe;
+      color: #1e40af;
+    }
+    .dark .law-text mark.hl-competencia {
+      background-color: rgba(59, 130, 246, 0.26);
+      color: #93c5fd;
+    }
+    /* 4. [CONCEITO / ELEMENTO NUCLEAR] — Roxo / Violeta suave */
+    .law-text mark.hl-conceito {
+      background-color: #ede9fe;
+      color: #5b21b6;
+    }
+    .dark .law-text mark.hl-conceito {
+      background-color: rgba(139, 92, 246, 0.28);
+      color: #c4b5fd;
+    }
+
     .hide-marks mark {
       background-color: transparent !important;
       color: inherit !important;
       padding: 0 !important;
       font-weight: inherit !important;
+    }
+    .hide-marks .pegadinha-note {
+      display: none !important;
     }
 
     /* Modos de visualização forçados (Celular / PC) */
@@ -355,6 +395,29 @@
     </div>
   </div>
 
+  <!-- MODAL RÁPIDO: CONFIGURAR CHAVE GEMINI PARA UPGRADE COM IA -->
+  <div id="modal-gemini-upgrade" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl animate-fade-in">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-base font-extrabold text-slate-900 dark:text-white">✨ Ativar Upgrade com IA VUNESP</h3>
+        <button onclick="App.closeGeminiModal()" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">✕</button>
+      </div>
+      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+        Para aplicar a <strong>marcação cirúrgica nas 4 categorias VUNESP</strong>, gerar <strong>notas de pegadinha</strong> e criar <strong>questões inéditas nos 3 formatos</strong>, informe sua chave gratuita da API do Gemini (<code>gemini-2.5-flash</code>). Ela fica salva apenas no seu navegador.
+      </p>
+      <form onsubmit="App.saveGeminiAndContinueUpgrade(event)" class="space-y-3">
+        <input id="quick-gemini-key" type="password" required placeholder="AIza..." class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500" />
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <button type="button" onclick="App.closeGeminiModal(); App.setTab('ajustes');" class="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">Abrir Ajustes</button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="App.closeGeminiModal()" class="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">Cancelar</button>
+            <button type="submit" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm">Salvar & Fazer Upgrade</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- TOAST DE NOTIFICAÇÃO -->
   <div id="toast" class="hidden fixed bottom-20 lg:bottom-6 right-4 z-[60] max-w-sm px-4 py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow-xl animate-fade-in"></div>
 
@@ -369,12 +432,12 @@
     // Seus aplicativos > App da Web (</>) > Configuração do SDK.
     // Dica: Ao preencher abaixo, o app conecta automaticamente no PC e no celular!
     const DEFAULT_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCSA6c0WG_Cm3ZY_b_zdS_8Q0mhVVS6mUk",
-  authDomain: "decoreitjsp.firebaseapp.com",
-  projectId: "decoreitjsp",
-  storageBucket: "decoreitjsp.firebasestorage.app",
-  messagingSenderId: "488268513679",
-  appId: "1:488268513679:web:d8f564b366b59329b88bfa"
+      apiKey: "COLE_SUA_API_KEY_AQUI",
+      authDomain: "COLE_SEU_AUTH_DOMAIN_AQUI",
+      projectId: "COLE_SEU_PROJECT_ID_AQUI",
+      storageBucket: "COLE_SEU_STORAGE_BUCKET_AQUI",
+      messagingSenderId: "COLE_SEU_MESSAGING_SENDER_ID_AQUI",
+      appId: "COLE_SEU_APP_ID_AQUI"
     };
 
     const STORAGE_KEY = 'decorei_tjsp_prod_state_v1';
@@ -434,20 +497,23 @@
           id: 'ex_cp_peculato',
           disciplineId: 'cp',
           isExample: true,
+          origemIa: true,
           breadcrumb: 'TÍTULO XI — DOS CRIMES CONTRA A ADMINISTRAÇÃO PÚBLICA › CAPÍTULO I',
           title: 'Dos Crimes Praticados por Funcionário Público (Peculato e Concussão)',
-          subtitle: 'Art. 312 ao Art. 316 • 3 artigos essenciais',
+          subtitle: 'Art. 312 ao Art. 316 • 2 artigos essenciais',
           readingMin: 5,
           articles: [
             {
               numero: 'Art. 312',
               rawText: 'Apropriar-se o funcionário público de dinheiro, valor ou qualquer outro bem móvel, público ou particular, de que tem a posse em razão do cargo, ou desviá-lo, em proveito próprio ou alheio:\nPena - reclusão, de dois a doze anos, e multa.\n§ 1º - Aplica-se a mesma pena, se o funcionário público, embora não tendo a posse do dinheiro, valor ou bem, o subtrai, ou concorre para que seja subtraído, em proveito próprio ou alheio, valendo-se de facilidade que lhe proporciona a qualidade de funcionário.\n§ 2º - Se o funcionário concorre culposamente para o crime de outrem:\nPena - detenção, de três meses a um ano.\n§ 3º - No caso do parágrafo anterior, a reparação do dano, se precede à sentença irrecorrível, extingue a punibilidade; se lhe é posterior, reduz de metade a pena imposta.',
-              textoHtml: 'Apropriar-se o funcionário público de dinheiro, valor ou qualquer outro bem <mark>móvel</mark>, público ou particular, de que tem a posse em razão do cargo, ou desviá-lo, em proveito próprio ou alheio:\nPena - <mark>reclusão</mark>, de dois a doze anos, e multa.\n§ 1º - Aplica-se a mesma pena, se o funcionário público, embora não tendo a posse do dinheiro, valor ou bem, o subtrai, ou concorre para que seja subtraído, em proveito próprio ou alheio, valendo-se de facilidade que lhe proporciona a qualidade de funcionário.\n§ 2º - Se o funcionário concorre <mark>culposamente</mark> para o crime de outrem:\nPena - <mark>detenção</mark>, de três meses a um ano.\n§ 3º - No caso do parágrafo anterior, a reparação do dano, se <mark>precede à sentença irrecorrível</mark>, <mark>extingue a punibilidade</mark>; se lhe é posterior, <mark>reduz de metade</mark> a pena imposta.'
+              textoHtml: '<mark class="hl-conceito">Apropriar-se</mark> o <mark class="hl-competencia">funcionário público</mark> de dinheiro, valor ou qualquer outro <mark class="hl-conceito">bem móvel</mark>, público ou particular, de que tem a posse em razão do cargo, ou <mark class="hl-conceito">desviá-lo</mark>, em proveito próprio ou alheio:\nPena - <mark class="hl-conceito">reclusão</mark>, de <mark class="hl-prazo">dois a doze anos</mark>, e multa.\n§ 1º - Aplica-se a mesma pena, se o <mark class="hl-competencia">funcionário público</mark>, <mark class="hl-excecao">embora não tendo a posse</mark> do dinheiro, valor ou bem, o <mark class="hl-conceito">subtrai</mark>, ou concorre para que seja subtraído, em proveito próprio ou alheio, valendo-se de facilidade que lhe proporciona a qualidade de funcionário.\n§ 2º - Se o <mark class="hl-competencia">funcionário</mark> concorre <mark class="hl-conceito">culposamente</mark> para o crime de outrem:\nPena - <mark class="hl-conceito">detenção</mark>, de <mark class="hl-prazo">três meses a um ano</mark>.\n§ 3º - No caso do <mark class="hl-conceito">parágrafo anterior</mark>, a reparação do dano, se <mark class="hl-excecao">precede à sentença irrecorrível</mark>, <mark class="hl-conceito">extingue a punibilidade</mark>; se lhe é <mark class="hl-excecao">posterior</mark>, reduz de <mark class="hl-prazo">metade</mark> a pena imposta.',
+              notaPegadinha: '⚠️ Pegadinha Vunesp: A reparação do dano só extingue a punibilidade no peculato CULPOSO (§ 2º) se preceder à sentença irrecorrível; se posterior, reduz de metade.'
             },
             {
               numero: 'Art. 316',
               rawText: 'Exigir, para si ou para outrem, direta ou indiretamente, ainda que fora da função ou antes de assumi-la, mas em razão dela, vantagem indevida:\nPena - reclusão, de 2 (dois) a 12 (doze) anos, e multa.',
-              textoHtml: '<mark>Exigir</mark>, para si ou para outrem, direta ou indiretamente, ainda que <mark>fora da função ou antes de assumi-la</mark>, mas em razão dela, vantagem indevida:\nPena - <mark>reclusão</mark>, de 2 (dois) a 12 (doze) anos, e multa.'
+              textoHtml: '<mark class="hl-conceito">Exigir</mark>, para si ou para outrem, direta ou indiretamente, <mark class="hl-excecao">ainda que fora da função ou antes de assumi-la</mark>, mas em razão dela, <mark class="hl-conceito">vantagem indevida</mark>:\nPena - <mark class="hl-conceito">reclusão</mark>, de <mark class="hl-prazo">2 (dois) a 12 (doze) anos</mark>, e multa.',
+              notaPegadinha: '⚠️ Pegadinha Vunesp: Concussão usa o verbo EXIGIR (com reclusão de 2 a 12 anos). Não confunda com Corrupção Passiva (solicitar, receber ou aceitar promessa).'
             }
           ],
           questions: [
@@ -491,6 +557,7 @@
           id: 'ex_10261_deveres',
           disciplineId: 'lei_10261',
           isExample: true,
+          origemIa: true,
           breadcrumb: 'TÍTULO VI — DOS DEVERES, DAS PROIBIÇÕES E DAS RESPONSABILIDADES › CAPÍTULO I',
           title: 'Dos Deveres e das Proibições do Funcionário Público',
           subtitle: 'Art. 241 ao Art. 242 • 2 artigos essenciais',
@@ -499,12 +566,14 @@
             {
               numero: 'Art. 241',
               rawText: 'São deveres do funcionário:\nI - ser assíduo e pontual;\nII - cumprir as ordens superiores, representando quando forem manifestamente ilegais;\nIII - desempenhar com zelo e presteza os trabalhos de que for incumbido;\nIV - guardar sigilo sobre os assuntos da repartição e, especialmente, sobre despachos, decisões ou providências;',
-              textoHtml: 'São deveres do funcionário:\nI - ser assíduo e pontual;\nII - cumprir as ordens superiores, <mark>representando quando forem manifestamente ilegais</mark>;\nIII - desempenhar com zelo e presteza os trabalhos de que for incumbido;\nIV - <mark>guardar sigilo</mark> sobre os assuntos da repartição e, especialmente, sobre despachos, decisões ou providências;'
+              textoHtml: 'São <mark class="hl-conceito">deveres</mark> do <mark class="hl-competencia">funcionário</mark>:\nI - ser assíduo e pontual;\nII - cumprir as ordens superiores, <mark class="hl-excecao">representando quando forem manifestamente ilegais</mark>;\nIII - desempenhar com zelo e presteza os trabalhos de que for incumbido;\nIV - <mark class="hl-conceito">guardar sigilo</mark> sobre os assuntos da repartição e, especialmente, sobre despachos, decisões ou providências;',
+              notaPegadinha: '⚠️ Pegadinha Vunesp: A banca costuma trocar "manifestamente ilegais" por "inconvenientes" ou afirmar que o servidor deve recusar sem representar.'
             },
             {
               numero: 'Art. 242',
               rawText: 'Ao funcionário é proibido:\nI - (Revogado);\nII - retirar, sem prévia permissão da autoridade competente, qualquer documento ou objeto existente na repartição;\nIII - entreter-se, durante as horas de trabalho, em palestras, leituras ou outras atividades estranhas ao serviço;\nIV - deixar de comparecer ao serviço sem causa justificada;',
-              textoHtml: 'Ao funcionário é <mark>proibido</mark>:\nII - retirar, <mark>sem prévia permissão da autoridade competente</mark>, qualquer documento ou objeto existente na repartição;\nIII - entreter-se, durante as horas de trabalho, em palestras, leituras ou outras atividades estranhas ao serviço;\nIV - deixar de comparecer ao serviço <mark>sem causa justificada</mark>;'
+              textoHtml: 'Ao <mark class="hl-competencia">funcionário</mark> é <mark class="hl-excecao">proibido</mark>:\nII - retirar, <mark class="hl-excecao">sem prévia permissão</mark> da <mark class="hl-competencia">autoridade competente</mark>, qualquer documento ou objeto existente na repartição;\nIII - entreter-se, durante as horas de trabalho, em palestras, leituras ou outras atividades estranhas ao serviço;\nIV - deixar de comparecer ao serviço <mark class="hl-excecao">sem causa justificada</mark>;',
+              notaPegadinha: '⚠️ Pegadinha Vunesp: Para retirar documento da repartição não basta "comunicar" ou "dar ciência" — exige-se PRÉVIA PERMISSÃO da autoridade competente.'
             }
           ],
           questions: [
@@ -581,9 +650,11 @@
       errorsFilterDisc: 'all',
       importTargetDisc: 'cp',
       importPreview: null,
-      splitLongSections: false,
-      blockSizeFallback: 6,
-      authModalTab: 'login'
+      splitLongSections: true,
+      maxArticlesPerTrail: 6,
+      authModalTab: 'login',
+      pendingUpgradeTrailId: null,
+      upgradingTrailId: null
     };
 
     function saveState(triggerCloudSync = true) {
@@ -1031,17 +1102,78 @@
     // 6. PARSER REGEX HIERÁRQUICO (0% DE PERDA) & GERADOR GEMINI / OFFLINE
     // =========================================================================
     const ParserEngine = {
+      /**
+       * Marcação cirúrgica offline nas 4 categorias da banca VUNESP TJ-SP
+       * preservando 100% da literalidade e sem sobrepor tags HTML.
+       */
       highlightVunesp(text) {
-        const terms = [
-          /(\b\d+\s*(?:dias?|meses|mês|anos?|horas?)\b)/gi,
-          /(\b(?:salvo|exceto|vedado|vedada|proibido|obrigatório|obrigatória|facultativo|facultativa|imprescindível|inafiançável|imprescritível|reclusão|detenção|multa|demissão|suspensão|advertência|nulo|nula|sempre|nunca|somente|exclusivamente|privativamente|exigir|solicitar|manifestamente ilegais|prévia permissão)\b)/gi
-        ];
-        let html = escapeHtml(text);
-        terms.forEach(rx => { html = html.replace(rx, '<mark>$1</mark>'); });
-        return html;
+        const escaped = escapeHtml(text);
+        const tokens = [];
+        const protect = (str, rx, cls) => str.replace(rx, (match) => {
+          const idx = tokens.length;
+          tokens.push(`<mark class="${cls}">${match}</mark>`);
+          return `@@HL${idx}@@`;
+        });
+
+        let out = escaped;
+        // 1. [EXCEÇÃO / RESTRIÇÃO]
+        out = protect(
+          out,
+          /\b(?:n[ãa]o\s+se\s+aplica|sob\s+pena\s+de|sempre\s+que|em\s+regra|desde\s+que|sem\s+pr[ée]via\s+permiss[ãa]o|sem\s+causa\s+justificada|ainda\s+que|salvo|exceto|vedado|vedada|vedados|vedadas|proibido|proibida|somente|ressalvado|ressalvada|ressalvados|independentemente|exclusivamente|unicamente|privativamente|obrigat[óo]rio|obrigat[óo]ria|facultativo|facultativa|nunca|jamais)\b/gi,
+          'hl-excecao'
+        );
+        // 2. [PRAZO / NÚMERO / QUÓRUM]
+        out = protect(
+          out,
+          /(?:\b\d+(?:\s*\([^)]+\))?\s*(?:dias?\s+[úu]teis|dias?|meses|m[êe]s|anos?|horas?|minutos?)\b|\b(?:dois|tr[êe]s|quatro|cinco|seis|sete|oito|nove|dez|doze|quinze|vinte|trinta|sessenta|noventa)\s+(?:dias?|meses|anos?|horas?)\b|\b\d+\/\d+\b|\b\d+(?:,\d+)?%|\b(?:maioria\s+absoluta|maioria\s+simples|maioria\s+relativa|dois\s+ter[çc]os|tr[êe]s\s+quintos|um\s+ter[çc]o|metade|em\s+dobro|em\s+triplo)\b)/gi,
+          'hl-prazo'
+        );
+        // 3. [COMPETÊNCIA / SUJEITO]
+        out = protect(
+          out,
+          /\b(?:Juiz\s+de\s+Direito|Juiz\s+Corregedor|Juiz|Escriv[ãa]o|Corregedor\s+Geral|Corregedoria\s+Geral|Conselho\s+Superior\s+da\s+Magistratura|Presidente\s+do\s+Tribunal|Tribunal\s+de\s+Justi[çc]a|Minist[ée]rio\s+P[úu]blico|Defensor\s+P[úu]blico|Oficial\s+de\s+Justi[çc]a|Escrevente|funcion[áa]rio\s+p[úu]blico|servidor\s+p[úu]blico|autoridade\s+competente|autoridade\s+judici[áa]ria|Chefe\s+do\s+Poder\s+Executivo|Poder\s+Judici[áa]rio)\b/gi,
+          'hl-competencia'
+        );
+        // 4. [CONCEITO / ELEMENTO NUCLEAR]
+        out = protect(
+          out,
+          /\b(?:lei\s+complementar|lei\s+ordin[áa]ria|emenda\s+constitucional|resolu[çc][ãa]o|portaria|indulg[êe]ncia|dolosamente|culposamente|dolo|culpa|peculato|prevarica[çc][ãa]o|concuss[ãa]o|corrup[çc][ãa]o\s+passiva|corrup[çc][ãa]o\s+ativa|improbidade|reclus[ãa]o|deten[çc][ãa]o|demiss[ãa]o|suspens[ãa]o|advert[êe]ncia|repreens[ãa]o|cassa[çc][ãa]o|inafian[çc][áa]vel|imprescrit[íi]vel|extingue\s+a\s+punibilidade|nulidade\s+absoluta|nulidade\s+relativa|exigir|solicitar|receber|apropriar-se|desviar|art\.\s*\d+[º°o]?(?:-[A-Z])?|par[áa]grafo\s+anterior|inciso\s+anterior)\b/gi,
+          'hl-conceito'
+        );
+
+        return out.replace(/@@HL(\d+)@@/g, (_, idx) => tokens[Number(idx)]);
       },
 
-      parseLawText(rawText, splitLong = false, fallbackBlock = 6) {
+      /**
+       * Gera nota curta de atenção offline para pegadinhas clássicas da VUNESP.
+       */
+      detectOfflinePegadinha(rawText) {
+        const t = rawText || '';
+        if (/\b(?:dever[áa]|poder[áa])\b/i.test(t)) {
+          return '⚠️ Pegadinha Vunesp: Atenção aos verbos "deverá" (obrigação) vs. "poderá" (faculdade) — a banca inverte frequentemente.';
+        }
+        if (/\b(?:reclus[ãa]o|deten[çc][ãa]o)\b/i.test(t)) {
+          return '⚠️ Pegadinha Vunesp: Confira a espécie da pena (reclusão vs. detenção) e os limites mínimo e máximo previstos.';
+        }
+        if (/\b\d+\s*(?:dias?|meses|anos?|horas?)\b/i.test(t)) {
+          return '⚠️ Pegadinha Vunesp: Memorize exatamente o prazo/número indicado — a banca costuma dobrar ou reduzir pela metade.';
+        }
+        if (/\b(?:salvo|exceto|vedado|proibido|ressalvado)\b/i.test(t)) {
+          return '⚠️ Pegadinha Vunesp: Atenção à exceção ou proibição expressa; a banca costuma omitir o termo restritivo nas alternativas.';
+        }
+        if (/\b(?:lei\s+complementar|lei\s+ordin[áa]ria)\b/i.test(t)) {
+          return '⚠️ Pegadinha Vunesp: Não confunda a exigência de Lei Complementar com Lei Ordinária ou Resolução.';
+        }
+        return '';
+      },
+
+      /**
+       * Divide o texto legal respeitando TÍTULO > CAPÍTULO > SEÇÃO > SUBSEÇÃO e Art.
+       * Quando qualquer seção ultrapassar maxPerTrail (padrão 6), fatia automaticamente
+       * em trilhas sequenciais de no máximo maxPerTrail artigos, sem misturar seções.
+       */
+      parseLawText(rawText, splitLong = true, maxPerTrail = 6) {
+        const limit = Math.max(1, Number(maxPerTrail) || 6);
         const lines = rawText.replace(/\r/g, '').split('\n').map(l => l.trim()).filter(Boolean);
         const rxHeading = /^(T[ÍI]TULO|CAP[ÍI]TULO|SE[ÇC][ÃA]O|SUBSE[ÇC][ÃA]O)\s+([IVXLCDM\d]+(?:-[A-Z])?|[ÚU]NICO)\b(.*)$/i;
         const rxArt = /^(Art\.?\s*\d+(?:[º°o])?(?:-[A-Z])?\.?)\s*(.*)$/i;
@@ -1109,12 +1241,11 @@
         const hasHeadings = nonEmpty.length > 1 || (nonEmpty.length === 1 && nonEmpty[0].breadcrumb !== 'Disposições Gerais');
 
         nonEmpty.forEach(sec => {
-          const shouldSplit = (!hasHeadings && sec.articles.length > fallbackBlock) || (splitLong && sec.articles.length > 12);
-          const chunkSize = !hasHeadings ? fallbackBlock : 10;
+          const shouldSplit = (splitLong && sec.articles.length > limit) || (!hasHeadings && sec.articles.length > limit);
           if (shouldSplit) {
-            for (let idx = 0; idx < sec.articles.length; idx += chunkSize) {
-              const slice = sec.articles.slice(idx, idx + chunkSize);
-              const partNum = Math.floor(idx / chunkSize) + 1;
+            for (let idx = 0; idx < sec.articles.length; idx += limit) {
+              const slice = sec.articles.slice(idx, idx + limit);
+              const partNum = Math.floor(idx / limit) + 1;
               finalTrails.push(this.buildTrailObj(sec.breadcrumb, `${sec.title} (Parte ${partNum})`, slice));
             }
           } else {
@@ -1123,7 +1254,7 @@
         });
 
         const totalArticles = finalTrails.reduce((acc, t) => acc + t.articles.length, 0);
-        return { trails: finalTrails, totalArticles };
+        return { trails: finalTrails, totalArticles, maxPerTrail: limit, splitActive: splitLong };
       },
 
       buildTrailObj(breadcrumb, title, articles) {
@@ -1134,12 +1265,13 @@
           breadcrumb,
           title,
           subtitle,
-          readingMin: articles.length <= 8 ? 5 : 10,
+          readingMin: articles.length <= 6 ? 5 : 10,
           selected: true,
           articles: articles.map(a => ({
             numero: a.numero,
             textoHtml: this.highlightVunesp(a.rawText),
-            rawText: a.rawText
+            rawText: a.rawText,
+            notaPegadinha: this.detectOfflinePegadinha(a.rawText)
           }))
         };
       }
@@ -1263,6 +1395,89 @@ ${articlesText.slice(0, 12000)}`;
           console.warn('Fallback offline acionado:', err);
           return this.generateOffline(trail, existingEnunciados, count);
         }
+      },
+
+      /**
+       * Upgrade completo de uma trilha com IA (Especialista VUNESP TJ-SP):
+       * devolve 100% da literalidade dos artigos com marcação cirúrgica nas 4 categorias
+       * + notas de pegadinha + 6 questões elaboradas nos 3 formatos VUNESP.
+       */
+      async upgradeTrailWithGemini(trail, disciplineName) {
+        const apiKey = localStorage.getItem(GEMINI_KEY_STORAGE)?.trim();
+        if (!apiKey) throw new Error('NO_KEY');
+
+        const pureArticles = (trail.articles || []).map(a => ({
+          numero: a.numero,
+          texto: (a.rawText || (a.textoHtml || '').replace(/<[^>]+>/g, '')).trim()
+        }));
+
+        const prompt = `Atue como um especialista na preparação para o concurso de Escrevente Técnico Judiciário do TJ-SP (banca Vunesp), focado na análise e marcação cirúrgica de lei seca.
+Disciplina: ${disciplineName}.
+Trilha/Capítulo: ${trail.title}.
+
+TAREFA 1 — MARCAÇÃO CIRÚRGICA DA LEI SECA (100% LITERAL):
+Receba cada artigo abaixo e devolva o MESMO texto integral, SEM resumir e SEM alterar uma única palavra da redação original, aplicando destaques cirúrgicos apenas nas palavras ou expressões-chave (NUNCA grife frases inteiras) usando EXCLUSIVAMENTE estas 4 tags HTML:
+1. <mark class="hl-excecao">...</mark> — [EXCEÇÃO / RESTRIÇÃO]: termos limitadores/excludentes (salvo, exceto, vedado, proibido, somente, sempre que, em regra, ressalvado, independentemente, não se aplica, desde que, sob pena de).
+2. <mark class="hl-prazo">...</mark> — [PRAZO / NÚMERO / QUÓRUM]: prazos em dias/meses/anos/horas, percentuais, valores, quantidades e quóruns (15 dias, 2/3, 48 horas, maioria absoluta).
+3. <mark class="hl-competencia">...</mark> — [COMPETÊNCIA / SUJEITO]: quem pratica, julga, autoriza ou a quem a regra se aplica (Juiz de Direito, Escrivão, Corregedor Geral, funcionário público, autoridade competente).
+4. <mark class="hl-conceito">...</mark> — [CONCEITO / ELEMENTO NUCLEAR]: palavras-chave nucleares da conduta/requisito/instituto e remissões a outros artigos (indulgência, dolo, culpa, lei complementar, lei ordinária, resolução, reclusão, detenção).
+Se houver pegadinha clássica da Vunesp no artigo, preencha "notaPegadinha" começando exatamente com "⚠️ Pegadinha Vunesp:" (caso contrário, "").
+
+TAREFA 2 — QUESTÕES VUNESP (3 FORMATOS):
+Gere exatamente 6 questões inéditas e elaboradas no estilo VUNESP (2 "true_false", 2 "cloze", 2 "multiple_choice") cobrindo os artigos fornecidos, com "textoLiteral" usando as mesmas tags <mark class="hl-..."> e "dicaVunesp" objetiva.
+
+RETORNE APENAS UM OBJETO JSON VÁLIDO NESTE FORMATO EXATO:
+{
+  "artigos": [
+    {
+      "numero": "Art. X",
+      "textoHtml": "Texto 100% integral com <mark class=\\"hl-excecao\\">...</mark> preservando quebras de linha \\n",
+      "notaPegadinha": "⚠️ Pegadinha Vunesp: ..."
+    }
+  ],
+  "questoes": [
+    {"tipo":"true_false","artigoRef":"Art. X","enunciado":"...","respostaCorreta":false,"textoLiteral":"Art. X — ...","dicaVunesp":"..."},
+    {"tipo":"cloze","artigoRef":"Art. Y","enunciado":"... _____ ...","opcoes":["a","b","c","d"],"respostaCorreta":"a","textoLiteral":"...","dicaVunesp":"..."},
+    {"tipo":"multiple_choice","artigoRef":"Art. Z","enunciado":"...","opcoes":["A","B","C","D"],"respostaCorreta":1,"textoLiteral":"...","dicaVunesp":"..."}
+  ]
+}
+
+ARTIGOS ORIGINAIS (MANTENHA A LITERALIDADE INTEGRAL):
+${JSON.stringify(pureArticles)}`;
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json' }
+          })
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const parsed = JSON.parse(raw);
+
+        if (!Array.isArray(parsed?.artigos) || !Array.isArray(parsed?.questoes)) {
+          throw new Error('Estrutura JSON inesperada da IA');
+        }
+
+        const updatedArticles = pureArticles.map((orig, idx) => {
+          const aiArt = parsed.artigos.find(a => a.numero === orig.numero) || parsed.artigos[idx];
+          return {
+            numero: orig.numero,
+            rawText: orig.texto,
+            textoHtml: aiArt?.textoHtml || ParserEngine.highlightVunesp(orig.texto),
+            notaPegadinha: (aiArt?.notaPegadinha || '').trim()
+          };
+        });
+
+        const updatedQuestions = parsed.questoes.map((q, idx) => ({
+          ...q,
+          id: `aiq_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 6)}`
+        }));
+
+        return { articles: updatedArticles, questions: updatedQuestions };
       }
     };
 
@@ -1375,25 +1590,40 @@ ${articlesText.slice(0, 12000)}`;
       renderReading() {
         const t = this.trail;
         const disc = getDisciplineById(t.disciplineId);
+        const isUpgrading = ui.upgradingTrailId === t.id;
         document.getElementById('player-header-info').innerHTML = `
-          <p class="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 truncate">Fase 1 • Leitura Ativa • ${escapeHtml(disc.short)}</p>
+          <p class="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 truncate">Fase 1 • Leitura Ativa • ${escapeHtml(disc.short)} ${t.origemIa ? '• ✨ IA VUNESP' : '• ⚡ Offline'}</p>
           <p class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${escapeHtml(t.title)}</p>`;
 
         document.getElementById('player-body').innerHTML = `
           <div class="max-w-3xl mx-auto space-y-4">
-            <div class="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-sm">
-              <div class="flex items-center gap-2">
-                <span id="reading-timer-display" class="font-mono text-lg font-black text-indigo-600 dark:text-indigo-400">${this.formatTime(this.timerSec)}</span>
-                <button onclick="Player.toggleTimer()" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold">${this.timerRunning ? '⏸ Pausar' : '▶ Iniciar'}</button>
-                <button onclick="Player.resetTimer()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold">↺</button>
+            <div class="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl p-3 space-y-2.5 shadow-sm">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span id="reading-timer-display" class="font-mono text-lg font-black text-indigo-600 dark:text-indigo-400">${this.formatTime(this.timerSec)}</span>
+                  <button onclick="Player.toggleTimer()" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-bold">${this.timerRunning ? '⏸ Pausar' : '▶ Iniciar'}</button>
+                  <button onclick="Player.resetTimer()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold">↺</button>
+                </div>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <button onclick="App.changeFont(-1)" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold">A-</button>
+                  <button onclick="App.changeFont(1)" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold">A+</button>
+                  <button onclick="App.toggleMarks()" class="px-2.5 py-1.5 rounded-xl ${state.prefs.showMarks ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'} text-xs font-bold">
+                    🖍️ Pegadinhas VUNESP
+                  </button>
+                  <button ${isUpgrading ? 'disabled' : `onclick="App.upgradeTrailWithAI('${t.id}')"`} class="px-2.5 py-1.5 rounded-xl ${t.origemIa ? 'bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800' : 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm'} text-xs font-extrabold transition">
+                    ${isUpgrading ? '⏳ Aprimorando...' : '✨ Upgrade com IA'}
+                  </button>
+                </div>
               </div>
-              <div class="flex items-center gap-1.5">
-                <button onclick="App.changeFont(-1)" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold">A-</button>
-                <button onclick="App.changeFont(1)" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold">A+</button>
-                <button onclick="App.toggleMarks()" class="px-2.5 py-1.5 rounded-xl ${state.prefs.showMarks ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-200' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'} text-xs font-bold">
-                  🖍️ Pegadinhas
-                </button>
-              </div>
+
+              ${state.prefs.showMarks ? `
+                <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] font-bold">
+                  <span class="px-2 py-0.5 rounded-md bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300">Exceção / Restrição</span>
+                  <span class="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">Prazo / Número / Quórum</span>
+                  <span class="px-2 py-0.5 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300">Competência / Sujeito</span>
+                  <span class="px-2 py-0.5 rounded-md bg-violet-100 dark:bg-violet-950/60 text-violet-800 dark:text-violet-300">Conceito / Nuclear</span>
+                </div>
+              ` : ''}
             </div>
 
             <div class="space-y-3 law-text ${state.prefs.showMarks ? '' : 'hide-marks'}" style="font-size: ${state.prefs.fontSize}px">
@@ -1401,6 +1631,11 @@ ${articlesText.slice(0, 12000)}`;
                 <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm leading-relaxed">
                   <span class="inline-block px-2.5 py-0.5 mb-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-extrabold">${escapeHtml(a.numero)}</span>
                   <div class="text-slate-700 dark:text-slate-200">${this.formatArticleLines(a.textoHtml)}</div>
+                  ${a.notaPegadinha ? `
+                    <div class="pegadinha-note mt-3 px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-xs font-semibold text-amber-900 dark:text-amber-200 leading-snug">
+                      ${escapeHtml(a.notaPegadinha)}
+                    </div>
+                  ` : ''}
                 </article>
               `).join('')}
             </div>
@@ -1670,6 +1905,62 @@ ${articlesText.slice(0, 12000)}`;
         else this.render();
       },
 
+      closeGeminiModal() {
+        ui.pendingUpgradeTrailId = null;
+        document.getElementById('modal-gemini-upgrade').classList.add('hidden');
+      },
+
+      saveGeminiAndContinueUpgrade(e) {
+        e.preventDefault();
+        const key = document.getElementById('quick-gemini-key').value.trim();
+        if (!key) return;
+        localStorage.setItem(GEMINI_KEY_STORAGE, key);
+        const targetId = ui.pendingUpgradeTrailId;
+        this.closeGeminiModal();
+        showToast('✅ Chave Gemini salva! Iniciando Upgrade com IA...');
+        if (targetId) this.upgradeTrailWithAI(targetId);
+      },
+
+      async upgradeTrailWithAI(trailId) {
+        const trail = state.trails.find(t => t.id === trailId);
+        if (!trail) return;
+        const apiKey = localStorage.getItem(GEMINI_KEY_STORAGE)?.trim();
+        if (!apiKey) {
+          ui.pendingUpgradeTrailId = trailId;
+          document.getElementById('quick-gemini-key').value = '';
+          document.getElementById('modal-gemini-upgrade').classList.remove('hidden');
+          setTimeout(() => document.getElementById('quick-gemini-key').focus(), 50);
+          return;
+        }
+
+        const disc = getDisciplineById(trail.disciplineId);
+        ui.upgradingTrailId = trailId;
+        if (Player.mode === 'reading' && Player.trail?.id === trailId) Player.renderReading();
+        else this.render();
+        showToast('✨ Aplicando marcação cirúrgica VUNESP + questões via Gemini...');
+
+        try {
+          const upgraded = await QuestionGen.upgradeTrailWithGemini(trail, disc.name);
+          trail.articles = upgraded.articles;
+          trail.questions = upgraded.questions;
+          trail.origemIa = true;
+
+          // Atualiza o Banco de Questões substituindo as questões antigas desta trilha
+          state.questionBank = state.questionBank.filter(q => q.trailId !== trail.id);
+          upgraded.questions.forEach(q => state.questionBank.push({ ...q, disciplineId: trail.disciplineId, trailId: trail.id }));
+
+          saveState();
+          showToast('🚀 Upgrade com IA concluído! Marcação cirúrgica e questões atualizadas.');
+        } catch (err) {
+          console.error('Erro no Upgrade com IA:', err);
+          showToast('⚠️ Falha na API Gemini. Verifique sua chave ou conexão e tente novamente.');
+        } finally {
+          ui.upgradingTrailId = null;
+          if (Player.mode === 'reading' && Player.trail?.id === trailId) Player.renderReading();
+          else this.render();
+        }
+      },
+
       deleteTrail(trailId) {
         state.trails = state.trails.filter(t => t.id !== trailId);
         state.questionBank = state.questionBank.filter(q => q.trailId !== trailId);
@@ -1694,7 +1985,7 @@ ${articlesText.slice(0, 12000)}`;
 
       analyzeRawText(rawText) {
         if (!rawText || !rawText.trim()) return showToast('Envie um .docx ou cole o texto da lei primeiro.');
-        const parsed = ParserEngine.parseLawText(rawText, ui.splitLongSections, ui.blockSizeFallback);
+        const parsed = ParserEngine.parseLawText(rawText, ui.splitLongSections, ui.maxArticlesPerTrail);
         ui.importPreview = { ...parsed, rawText };
         this.render();
       },
@@ -1704,6 +1995,7 @@ ${articlesText.slice(0, 12000)}`;
         const selected = ui.importPreview.trails.filter(t => t.selected);
         if (!selected.length) return showToast('Selecione ao menos uma trilha.');
         const disc = getDisciplineById(ui.importTargetDisc);
+        const hasKey = Boolean(localStorage.getItem(GEMINI_KEY_STORAGE)?.trim());
 
         const progBox = document.getElementById('import-progress-box');
         const progBar = document.getElementById('import-progress-bar');
@@ -1717,18 +2009,34 @@ ${articlesText.slice(0, 12000)}`;
           if (progTxt) progTxt.textContent = `Processando trilha ${i + 1} de ${selected.length}: ${item.title}`;
 
           const trailId = `tr_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 5)}`;
-          const questions = useGemini
-            ? await QuestionGen.generateWithGemini(item, disc.name, new Set(), 6)
-            : QuestionGen.generateOffline(item, new Set(), 6);
+          let finalArticles = item.articles;
+          let questions = [];
+          let origemIa = false;
+
+          if (useGemini && hasKey) {
+            try {
+              const up = await QuestionGen.upgradeTrailWithGemini(item, disc.name);
+              finalArticles = up.articles;
+              questions = up.questions;
+              origemIa = true;
+            } catch {
+              questions = QuestionGen.generateOffline(item, new Set(), 6);
+              origemIa = false;
+            }
+          } else {
+            questions = QuestionGen.generateOffline(item, new Set(), 6);
+            origemIa = false;
+          }
 
           const newTrail = {
             id: trailId,
             disciplineId: disc.id,
+            origemIa,
             breadcrumb: item.breadcrumb,
             title: item.title,
             subtitle: item.subtitle,
             readingMin: item.readingMin,
-            articles: item.articles,
+            articles: finalArticles,
             questions
           };
           state.trails.push(newTrail);
@@ -1878,24 +2186,33 @@ ${articlesText.slice(0, 12000)}`;
                     const prevMastered = idx === 0 || state.progress[trails[idx - 1].id]?.mastered;
                     const mastered = state.progress[t.id]?.mastered;
                     const locked = !prevMastered;
+                    const isUpgrading = ui.upgradingTrailId === t.id;
                     return `
                       <div class="bg-white dark:bg-slate-800/80 border ${mastered ? 'border-emerald-400 dark:border-emerald-700' : 'border-slate-200 dark:border-slate-700'} rounded-2xl p-4 flex flex-col justify-between gap-3 ${locked ? 'opacity-65' : ''}">
                         <div>
                           <div class="flex items-center justify-between gap-2 mb-1.5">
                             <span class="text-[10px] font-extrabold uppercase tracking-wide text-indigo-600 dark:text-indigo-400 truncate">${escapeHtml(t.breadcrumb || 'Etapa ' + (idx + 1))}</span>
-                            <span class="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-black ${mastered ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : locked ? 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'}">
-                              ${mastered ? '✅ 100% Dominado' : locked ? '🔒 Bloqueada' : '🔓 Liberada'}
-                            </span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                              <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${t.origemIa ? 'bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300'}">
+                                ${t.origemIa ? '✨ IA VUNESP' : '⚡ Offline'}
+                              </span>
+                              <span class="px-2 py-0.5 rounded-full text-[10px] font-black ${mastered ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : locked ? 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300' : 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300'}">
+                                ${mastered ? '✅ 100% Dominado' : locked ? '🔒 Bloqueada' : '🔓 Liberada'}
+                              </span>
+                            </div>
                           </div>
                           <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">${escapeHtml(t.title)}</h3>
                           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">${escapeHtml(t.subtitle)} • ⏱️ ${t.readingMin || 5} min • 🎮 ${t.questions?.length || 0} questões</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-700/60">
-                          <button ${locked ? 'disabled' : `onclick="Player.openReading('${t.id}')"`} class="flex-1 py-2 rounded-xl text-xs font-extrabold ${locked ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}">
+                          <button ${locked ? 'disabled' : `onclick="Player.openReading('${t.id}')"`} class="flex-1 min-w-[110px] py-2 rounded-xl text-xs font-extrabold ${locked ? 'bg-slate-200 dark:bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}">
                             📖 Ler & Jogar
                           </button>
-                          <button onclick="App.generateMoreQuestions('${t.id}')" title="Gerar novos exercícios inéditos" class="px-3 py-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 text-xs font-extrabold">
-                            ✨ + Exercícios
+                          <button ${isUpgrading ? 'disabled' : `onclick="App.upgradeTrailWithAI('${t.id}')"`} title="Aplicar marcação cirúrgica VUNESP + questões com IA" class="px-3 py-2 rounded-xl text-xs font-extrabold transition ${t.origemIa ? 'bg-violet-50 dark:bg-violet-950/50 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800' : 'bg-violet-600 hover:bg-violet-700 text-white shadow-sm'}">
+                            ${isUpgrading ? '⏳ IA...' : '✨ Upgrade com IA'}
+                          </button>
+                          <button onclick="App.generateMoreQuestions('${t.id}')" title="Gerar novos exercícios inéditos" class="px-2.5 py-2 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-200 text-xs font-extrabold">
+                            + Questões
                           </button>
                           <button onclick="App.deleteTrail('${t.id}')" title="Excluir trilha" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700/60 text-slate-400 hover:text-rose-500 text-xs">🗑️</button>
                         </div>
@@ -2056,10 +2373,15 @@ ${articlesText.slice(0, 12000)}`;
                   <button onclick="App.analyzeRawText(document.getElementById('manual-law-text').value)" class="mt-2 w-full py-2 rounded-xl bg-slate-800 dark:bg-indigo-600 text-white text-xs font-extrabold">Analisar Texto Colado</button>
                 </details>
 
-                <label class="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer">
-                  <input type="checkbox" ${ui.splitLongSections ? 'checked' : ''} onchange="ui.splitLongSections=this.checked; if(ui.importPreview) App.analyzeRawText(ui.importPreview.rawText);" class="rounded text-indigo-600" />
-                  <span>Dividir seções muito longas (&gt;12 artigos) automaticamente</span>
-                </label>
+                <div class="p-3 rounded-xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200/70 dark:border-indigo-800/60 space-y-2">
+                  <label class="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer">
+                    <input type="checkbox" ${ui.splitLongSections ? 'checked' : ''} onchange="ui.splitLongSections=this.checked; if(ui.importPreview) App.analyzeRawText(ui.importPreview.rawText);" class="rounded text-indigo-600" />
+                    <span>Fatiar automaticamente títulos/capítulos/seções acima de ${ui.maxArticlesPerTrail} artigos</span>
+                  </label>
+                  <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                    Regra ativa por padrão (máx. 6 artigos/trilha): nunca mistura seções diferentes e cria Parte 1, Parte 2, Parte 3... com 100% dos artigos.
+                  </p>
+                </div>
               </div>
 
               <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex flex-col justify-between">
@@ -2073,8 +2395,8 @@ ${articlesText.slice(0, 12000)}`;
                   <div class="space-y-3">
                     <div class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
                       <div>
-                        <p class="text-xs font-black text-emerald-700 dark:text-emerald-300">✅ 100% dos artigos mapeados</p>
-                        <p class="text-[11px] text-emerald-600 dark:text-emerald-400">${ui.importPreview.totalArticles} artigos em ${ui.importPreview.trails.length} trilha(s)</p>
+                        <p class="text-xs font-black text-emerald-700 dark:text-emerald-300">✅ ${ui.importPreview.splitActive ? `Limite de ${ui.importPreview.maxPerTrail} artigos por trilha ativo • ` : ''}100% dos artigos mapeados — 0% de perda</p>
+                        <p class="text-[11px] text-emerald-600 dark:text-emerald-400">${ui.importPreview.totalArticles} artigos distribuídos em ${ui.importPreview.trails.length} trilha(s)</p>
                       </div>
                       <button onclick="ui.importPreview=null; App.render();" class="text-[11px] font-bold text-slate-500 hover:text-rose-500">Limpar</button>
                     </div>
