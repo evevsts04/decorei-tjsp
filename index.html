@@ -8,9 +8,9 @@
   <meta name="theme-color" content="#1e3a8a" />
 
   <!-- Fonte Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <!-- Tailwind CSS via CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,15 +20,20 @@
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
           }
         }
       }
     };
   </script>
 
-  <!-- Mammoth.js para leitura de arquivos .docx 100% no navegador -->
+  <!-- Mammoth.js via CDN (leitura 100% local de arquivos .docx) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+
+  <!-- Firebase Compat SDK v10.12.2 via CDN -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <style>
     html, body {
@@ -44,7 +49,7 @@
     }
     .animate-fade-in { animation: fadeSlideUp 0.2s ease-out forwards; }
 
-    /* Destaques VUNESP */
+    /* Destaques de pegadinhas VUNESP */
     .law-text mark {
       background-color: #fef08a;
       color: #1e293b;
@@ -63,7 +68,7 @@
       font-weight: inherit !important;
     }
 
-    /* Modos de visualização forçados (PC / Celular) */
+    /* Modos de visualização forçados (Celular / PC) */
     html[data-view="mobile"] #desktop-sidebar { display: none !important; }
     html[data-view="mobile"] #mobile-header { display: flex !important; }
     html[data-view="mobile"] #mobile-bottom-nav { display: flex !important; }
@@ -71,6 +76,7 @@
       max-width: 448px !important;
       margin-left: auto !important;
       margin-right: auto !important;
+      padding-left: 0 !important;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
     }
     html[data-view="mobile"] #main-content {
@@ -111,7 +117,7 @@
 
   <!-- SIDEBAR FIXA (DESKTOP / PC) -->
   <aside id="desktop-sidebar" class="hidden lg:flex fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex-col justify-between p-4">
-    <div class="space-y-5 overflow-y-auto no-scrollbar">
+    <div class="space-y-4 overflow-y-auto no-scrollbar">
       <!-- Logo -->
       <div class="flex items-center gap-3 px-1">
         <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md shadow-indigo-600/30">
@@ -125,27 +131,38 @@
         </div>
       </div>
 
-      <!-- Status Auth / Nuvem -->
-      <button onclick="AuthUI.openModal()" class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 transition text-left">
-        <div class="flex items-center gap-2 min-w-0">
+      <!-- Card Conta Firebase / Status de Sincronização -->
+      <button onclick="AuthUI.openModal()" class="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 hover:border-indigo-400 transition text-left">
+        <div class="flex items-center gap-2.5 min-w-0">
           <span id="sidebar-auth-dot" class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
           <div class="min-w-0">
-            <p id="sidebar-auth-label" class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">Modo Local</p>
-            <p id="sidebar-sync-status" class="text-[10px] text-slate-500 dark:text-slate-400 truncate">Clique para entrar</p>
+            <p id="sidebar-auth-label" class="text-xs font-bold text-slate-700 dark:text-slate-200 truncate">Entrar / Sincronizar</p>
+            <p id="sidebar-sync-status" class="text-[10px] font-semibold text-slate-500 dark:text-slate-400 truncate">📱 Modo Local</p>
           </div>
         </div>
-        <span class="text-xs text-slate-400">☁️</span>
+        <span class="text-xs text-slate-400">›</span>
       </button>
 
-      <!-- Card Streak + XP -->
-      <div class="grid grid-cols-2 gap-2">
-        <div class="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-center">
-          <p class="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">Ofensiva</p>
-          <p class="text-sm font-black text-amber-700 dark:text-amber-300 mt-0.5">🔥 <span class="stat-streak">0d</span></p>
+      <!-- Card Streak + XP + Meta Diária -->
+      <div class="space-y-2">
+        <div class="grid grid-cols-2 gap-2">
+          <div class="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 text-center">
+            <p class="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400">Ofensiva</p>
+            <p class="text-sm font-black text-amber-700 dark:text-amber-300 mt-0.5">🔥 <span class="stat-streak">0d</span></p>
+          </div>
+          <div class="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 text-center">
+            <p class="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">Experiência</p>
+            <p class="text-sm font-black text-indigo-700 dark:text-indigo-300 mt-0.5">⚡ <span class="stat-xp">0</span></p>
+          </div>
         </div>
-        <div class="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/80 dark:border-indigo-800/60 text-center">
-          <p class="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">Experiência</p>
-          <p class="text-sm font-black text-indigo-700 dark:text-indigo-300 mt-0.5">⚡ <span class="stat-xp">0</span></p>
+        <div class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/70">
+          <div class="flex items-center justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1">
+            <span>Meta diária</span>
+            <span class="stat-daily-goal">0/15</span>
+          </div>
+          <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div class="stat-daily-bar h-full bg-emerald-500 transition-all" style="width: 0%"></div>
+          </div>
         </div>
       </div>
 
@@ -171,7 +188,7 @@
       </nav>
     </div>
 
-    <!-- Rodapé Sidebar: Modo Tela + Tema -->
+    <!-- Rodapé Sidebar: Seletor de Tela + Tema -->
     <div class="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
       <div class="flex items-center justify-between bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-[11px] font-bold">
         <button onclick="App.setViewMode('auto')" data-view-btn="auto" class="view-btn flex-1 py-1 rounded-lg transition">Auto</button>
@@ -188,7 +205,7 @@
   <!-- CONTAINER PRINCIPAL -->
   <div id="app-container" class="min-h-screen w-full lg:pl-64 flex flex-col bg-slate-50 dark:bg-slate-900 transition-all">
 
-    <!-- CABEÇALHO MOBILE -->
+    <!-- CABEÇALHO COMPACTO (MOBILE) -->
     <header id="mobile-header" class="lg:hidden sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-3.5 py-2.5 flex items-center justify-between gap-2">
       <div class="flex items-center gap-2 min-w-0">
         <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
@@ -199,8 +216,8 @@
         <div class="min-w-0">
           <h1 class="text-sm font-extrabold text-slate-900 dark:text-white truncate">Decorei TJSP</h1>
           <button onclick="AuthUI.openModal()" class="flex items-center gap-1 text-[10px] font-semibold text-slate-500 dark:text-slate-400">
-            <span id="mobile-auth-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-            <span id="mobile-auth-label" class="truncate max-w-[100px]">Modo Local</span>
+            <span id="mobile-auth-dot" class="w-2 h-2 rounded-full bg-slate-400 shrink-0"></span>
+            <span id="mobile-sync-status" class="truncate max-w-[120px]">📱 Modo Local</span>
           </button>
         </div>
       </div>
@@ -223,21 +240,21 @@
       <!-- Renderizado dinamicamente -->
     </main>
 
-    <!-- BARRA DE NAVEGAÇÃO INFERIOR (MOBILE) -->
+    <!-- BARRA DE NAVEGAÇÃO INFERIOR FIXA (MOBILE) -->
     <nav id="mobile-bottom-nav" class="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 px-2 py-1.5 flex items-center justify-around">
       <button onclick="App.setTab('trilhas')" data-nav="trilhas" class="mob-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl text-[10px] font-bold">
         <span class="text-base">🗺️</span><span>Trilhas</span>
       </button>
       <button onclick="App.setTab('revisoes')" data-nav="revisoes" class="mob-nav-btn relative flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl text-[10px] font-bold">
         <span class="text-base">🔄</span><span>Revisões</span>
-        <span class="badge-revisoes hidden absolute -top-0.5 right-0 px-1.5 py-0.2 text-[9px] font-black rounded-full bg-rose-500 text-white">0</span>
+        <span class="badge-revisoes hidden absolute -top-0.5 right-0 px-1.5 text-[9px] font-black rounded-full bg-rose-500 text-white">0</span>
       </button>
       <button onclick="App.setTab('importar')" data-nav="importar" class="mob-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl text-[10px] font-bold">
         <span class="text-base">📥</span><span>Importar</span>
       </button>
       <button onclick="App.setTab('erros')" data-nav="erros" class="mob-nav-btn relative flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl text-[10px] font-bold">
         <span class="text-base">🎯</span><span>Erros</span>
-        <span class="badge-erros hidden absolute -top-0.5 right-0 px-1.5 py-0.2 text-[9px] font-black rounded-full bg-amber-500 text-slate-950">0</span>
+        <span class="badge-erros hidden absolute -top-0.5 right-0 px-1.5 text-[9px] font-black rounded-full bg-amber-500 text-slate-950">0</span>
       </button>
       <button onclick="App.setTab('ajustes')" data-nav="ajustes" class="mob-nav-btn flex flex-col items-center gap-0.5 px-2 py-1 rounded-xl text-[10px] font-bold">
         <span class="text-base">⚙️</span><span>Ajustes</span>
@@ -245,7 +262,7 @@
     </nav>
   </div>
 
-  <!-- OVERLAY PLAYER FULL-FOCUS (FASE 1 LEITURA / FASE 2 ARENA / REVISÃO SRS / SIMULADO) -->
+  <!-- OVERLAY PLAYER FULL-FOCUS (LEITURA CRONOMETRADA / ARENA DE GAMES / SRS / SIMULADO) -->
   <div id="player-overlay" class="hidden fixed inset-0 z-50 bg-slate-50 dark:bg-slate-950 flex flex-col overflow-hidden">
     <header class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-3 flex items-center justify-between gap-3 shrink-0">
       <button onclick="Player.exit()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 transition">
@@ -256,9 +273,7 @@
         <span class="dark:hidden">🌙</span><span class="hidden dark:inline">☀️</span>
       </button>
     </header>
-    <div id="player-body" class="flex-1 overflow-y-auto px-4 py-5">
-      <!-- Conteúdo do player -->
-    </div>
+    <div id="player-body" class="flex-1 overflow-y-auto px-4 py-5"></div>
   </div>
 
   <!-- MODAL: NOVA DISCIPLINA / LEI PERSONALIZADA -->
@@ -270,12 +285,12 @@
       </div>
       <form onsubmit="DisciplineUI.save(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Nome da Lei / Disciplina *</label>
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Nome completo da Lei / Disciplina *</label>
           <input id="new-disc-name" type="text" required placeholder="Ex: Lei nº 14.133/2021 (Nova Lei de Licitações)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Sigla / Categoria curta (opcional)</label>
-          <input id="new-disc-short" type="text" placeholder="Ex: Licitações" maxlength="28" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
+          <label class="block text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">Sigla / Nome curto (opcional)</label>
+          <input id="new-disc-short" type="text" placeholder="Ex: Licitações (14.133)" maxlength="28" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm focus:ring-2 focus:ring-indigo-500 outline-none" />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
@@ -313,11 +328,11 @@
     </div>
   </div>
 
-  <!-- MODAL: AUTENTICAÇÃO FIREBASE -->
+  <!-- MODAL: AUTENTICAÇÃO FIREBASE (ENTRAR / CRIAR CONTA / GOOGLE / MODO LOCAL) -->
   <div id="modal-auth" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl w-full max-w-md p-5 shadow-2xl animate-fade-in">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-base font-extrabold text-slate-900 dark:text-white">☁️ Conta & Sincronização</h3>
+        <h3 class="text-base font-extrabold text-slate-900 dark:text-white">☁️ Conta & Sincronização Firebase</h3>
         <button onclick="AuthUI.closeModal()" class="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">✕</button>
       </div>
       <div id="modal-auth-body"></div>
@@ -329,7 +344,7 @@
     <div class="bg-white dark:bg-slate-900 border-2 border-rose-500 rounded-2xl w-full max-w-md p-5 shadow-2xl animate-fade-in">
       <h3 class="text-base font-extrabold text-rose-600 dark:text-rose-400 mb-2">🗑️ Limpar Tudo (Começar do Zero)</h3>
       <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-        Esta ação apagará <strong>todas as trilhas</strong>, <strong>disciplinas personalizadas</strong>, <strong>Banco de Questões</strong>, <strong>SRS</strong>, <strong>XP</strong>, <strong>Streak</strong> e <strong>Caderno de Erros</strong> (no navegador e no Firebase). Não é possível desfazer.
+        Esta ação apagará <strong>todas as trilhas (inclusive os exemplos iniciais)</strong>, <strong>disciplinas personalizadas</strong>, <strong>Banco de Questões</strong>, <strong>SRS</strong>, <strong>XP</strong>, <strong>Streak</strong> e <strong>Caderno de Erros</strong> tanto no navegador quanto no Cloud Firestore. Não é possível desfazer.
       </p>
       <label class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">Digite <span class="font-mono text-rose-600">ZERAR</span> para confirmar:</label>
       <input id="wipe-confirm-input" type="text" placeholder="ZERAR" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-sm font-mono uppercase mb-4 outline-none focus:ring-2 focus:ring-rose-500" />
@@ -340,17 +355,47 @@
     </div>
   </div>
 
-  <!-- TOAST NOTIFICAÇÃO -->
+  <!-- TOAST DE NOTIFICAÇÃO -->
   <div id="toast" class="hidden fixed bottom-20 lg:bottom-6 right-4 z-[60] max-w-sm px-4 py-3 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold shadow-xl animate-fade-in"></div>
 
-  <!-- SCRIPT PRINCIPAL (ES MODULE PARA FIREBASE V11 + APP COMPLETO) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  <!-- =========================================================================
+       SCRIPT PRINCIPAL — CONFIGURAÇÃO DO FIREBASE NO TOPO
+       ========================================================================= -->
+  <script>
+    // =========================================================================
+    // 🔥 CONFIGURAÇÃO DO FIREBASE (COLE SUAS CHAVES DO FIREBASE CONSOLE AQUI)
+    // =========================================================================
+    // Onde encontrar: Firebase Console > Configurações do projeto (⚙️) >
+    // Seus aplicativos > App da Web (</>) > Configuração do SDK.
+    // Dica: Ao preencher abaixo, o app conecta automaticamente no PC e no celular!
+    const firebaseConfig = {
+  apiKey: "AIzaSyCSA6c0WG_Cm3ZY_b_zdS_8Q0mhVVS6mUk",
+  authDomain: "decoreitjsp.firebaseapp.com",
+  projectId: "decoreitjsp",
+  storageBucket: "decoreitjsp.firebasestorage.app",
+  messagingSenderId: "488268513679",
+  appId: "1:488268513679:web:d8f564b366b59329b88bfa"
+    };
+
+    const STORAGE_KEY = 'decorei_tjsp_prod_state_v1';
+    const FB_CONFIG_KEY = 'decorei_tjsp_firebase_config';
+    const GEMINI_KEY_STORAGE = 'decorei_tjsp_gemini_key';
+
+    /**
+     * Valida se o objeto firebaseConfig contém credenciais reais
+     * (não vazias e sem o texto placeholder "COLE_SU").
+     */
+    function isValidFirebaseConfig(cfg) {
+      if (!cfg || typeof cfg !== 'object') return false;
+      const req = ['apiKey', 'authDomain', 'projectId'];
+      return req.every(k => {
+        const val = typeof cfg[k] === 'string' ? cfg[k].trim() : '';
+        return val.length > 5 && !val.toUpperCase().includes('COLE_SU');
+      });
+    }
 
     // =========================================================================
-    // 1. CATÁLOGO OFICIAL DAS 15 DISCIPLINAS DO EDITAL TJSP
+    // 1. CATÁLOGO OFICIAL DAS 15 LEGISLAÇÕES DO EDITAL TJSP
     // =========================================================================
     const DEFAULT_DISCIPLINES = [
       { id: 'cp', name: 'Código Penal (Decreto-Lei nº 2.848/1940 — crimes contra a fé pública e contra a Administração Pública)', short: 'Código Penal', icon: '⚖️', color: 'rose', custom: false },
@@ -371,73 +416,184 @@
     ];
 
     const COLOR_STYLES = {
-      indigo:  { bg: 'bg-indigo-50 dark:bg-indigo-950/40', border: 'border-indigo-200 dark:border-indigo-800/70', badge: 'bg-indigo-600 text-white', bar: 'bg-indigo-600' },
-      emerald: { bg: 'bg-emerald-50 dark:bg-emerald-950/40', border: 'border-emerald-200 dark:border-emerald-800/70', badge: 'bg-emerald-600 text-white', bar: 'bg-emerald-600' },
-      rose:    { bg: 'bg-rose-50 dark:bg-rose-950/40', border: 'border-rose-200 dark:border-rose-800/70', badge: 'bg-rose-600 text-white', bar: 'bg-rose-600' },
-      amber:   { bg: 'bg-amber-50 dark:bg-amber-950/40', border: 'border-amber-200 dark:border-amber-800/70', badge: 'bg-amber-600 text-white', bar: 'bg-amber-500' },
-      sky:     { bg: 'bg-sky-50 dark:bg-sky-950/40', border: 'border-sky-200 dark:border-sky-800/70', badge: 'bg-sky-600 text-white', bar: 'bg-sky-600' },
-      violet:  { bg: 'bg-violet-50 dark:bg-violet-950/40', border: 'border-violet-200 dark:border-violet-800/70', badge: 'bg-violet-600 text-white', bar: 'bg-violet-600' },
-      teal:    { bg: 'bg-teal-50 dark:bg-teal-950/40', border: 'border-teal-200 dark:border-teal-800/70', badge: 'bg-teal-600 text-white', bar: 'bg-teal-600' }
+      indigo:  { bg: 'bg-indigo-50 dark:bg-indigo-950/40', border: 'border-indigo-200 dark:border-indigo-800/70', bar: 'bg-indigo-600' },
+      emerald: { bg: 'bg-emerald-50 dark:bg-emerald-950/40', border: 'border-emerald-200 dark:border-emerald-800/70', bar: 'bg-emerald-600' },
+      rose:    { bg: 'bg-rose-50 dark:bg-rose-950/40', border: 'border-rose-200 dark:border-rose-800/70', bar: 'bg-rose-600' },
+      amber:   { bg: 'bg-amber-50 dark:bg-amber-950/40', border: 'border-amber-200 dark:border-amber-800/70', bar: 'bg-amber-500' },
+      sky:     { bg: 'bg-sky-50 dark:bg-sky-950/40', border: 'border-sky-200 dark:border-sky-800/70', bar: 'bg-sky-600' },
+      violet:  { bg: 'bg-violet-50 dark:bg-violet-950/40', border: 'border-violet-200 dark:border-violet-800/70', bar: 'bg-violet-600' },
+      teal:    { bg: 'bg-teal-50 dark:bg-teal-950/40', border: 'border-teal-200 dark:border-teal-800/70', bar: 'bg-teal-600' }
     };
 
     // =========================================================================
-    // 2. ESTADO GLOBAL & PERSISTÊNCIA (LOCALSTORAGE + FIREBASE FIRESTORE)
+    // 2. TRILHAS DE EXEMPLO INICIAIS (ELIMINADAS SE O USUÁRIO USAR "LIMPAR TUDO")
     // =========================================================================
-    const STORAGE_KEY = 'decorei_tjsp_v4_state';
-    const FB_CONFIG_KEY = 'decorei_tjsp_fb_config';
-    const GEMINI_KEY_STORAGE = 'decorei_tjsp_gemini_key';
+    function createInitialExampleTrails() {
+      return [
+        {
+          id: 'ex_cp_peculato',
+          disciplineId: 'cp',
+          isExample: true,
+          breadcrumb: 'TÍTULO XI — DOS CRIMES CONTRA A ADMINISTRAÇÃO PÚBLICA › CAPÍTULO I',
+          title: 'Dos Crimes Praticados por Funcionário Público (Peculato e Concussão)',
+          subtitle: 'Art. 312 ao Art. 316 • 3 artigos essenciais',
+          readingMin: 5,
+          articles: [
+            {
+              numero: 'Art. 312',
+              rawText: 'Apropriar-se o funcionário público de dinheiro, valor ou qualquer outro bem móvel, público ou particular, de que tem a posse em razão do cargo, ou desviá-lo, em proveito próprio ou alheio:\nPena - reclusão, de dois a doze anos, e multa.\n§ 1º - Aplica-se a mesma pena, se o funcionário público, embora não tendo a posse do dinheiro, valor ou bem, o subtrai, ou concorre para que seja subtraído, em proveito próprio ou alheio, valendo-se de facilidade que lhe proporciona a qualidade de funcionário.\n§ 2º - Se o funcionário concorre culposamente para o crime de outrem:\nPena - detenção, de três meses a um ano.\n§ 3º - No caso do parágrafo anterior, a reparação do dano, se precede à sentença irrecorrível, extingue a punibilidade; se lhe é posterior, reduz de metade a pena imposta.',
+              textoHtml: 'Apropriar-se o funcionário público de dinheiro, valor ou qualquer outro bem <mark>móvel</mark>, público ou particular, de que tem a posse em razão do cargo, ou desviá-lo, em proveito próprio ou alheio:\nPena - <mark>reclusão</mark>, de dois a doze anos, e multa.\n§ 1º - Aplica-se a mesma pena, se o funcionário público, embora não tendo a posse do dinheiro, valor ou bem, o subtrai, ou concorre para que seja subtraído, em proveito próprio ou alheio, valendo-se de facilidade que lhe proporciona a qualidade de funcionário.\n§ 2º - Se o funcionário concorre <mark>culposamente</mark> para o crime de outrem:\nPena - <mark>detenção</mark>, de três meses a um ano.\n§ 3º - No caso do parágrafo anterior, a reparação do dano, se <mark>precede à sentença irrecorrível</mark>, <mark>extingue a punibilidade</mark>; se lhe é posterior, <mark>reduz de metade</mark> a pena imposta.'
+            },
+            {
+              numero: 'Art. 316',
+              rawText: 'Exigir, para si ou para outrem, direta ou indiretamente, ainda que fora da função ou antes de assumi-la, mas em razão dela, vantagem indevida:\nPena - reclusão, de 2 (dois) a 12 (doze) anos, e multa.',
+              textoHtml: '<mark>Exigir</mark>, para si ou para outrem, direta ou indiretamente, ainda que <mark>fora da função ou antes de assumi-la</mark>, mas em razão dela, vantagem indevida:\nPena - <mark>reclusão</mark>, de 2 (dois) a 12 (doze) anos, e multa.'
+            }
+          ],
+          questions: [
+            {
+              id: 'ex_cp_q1',
+              tipo: 'true_false',
+              artigoRef: 'Art. 312, § 3º',
+              enunciado: 'No peculato culposo, a reparação do dano posterior à sentença irrecorrível extingue a punibilidade do agente.',
+              respostaCorreta: false,
+              textoLiteral: 'Art. 312, § 3º — A reparação do dano, se <mark>precede à sentença irrecorrível</mark>, extingue a punibilidade; se lhe é <mark>posterior</mark>, <mark>reduz de metade</mark> a pena imposta.',
+              dicaVunesp: 'Clássica da VUNESP: antes da sentença irrecorrível = extingue; depois = reduz de metade (e só vale para o peculato culposo).'
+            },
+            {
+              id: 'ex_cp_q2',
+              tipo: 'cloze',
+              artigoRef: 'Art. 316',
+              enunciado: 'Comete o crime de concussão o funcionário que _____, para si ou para outrem, direta ou indiretamente, vantagem indevida em razão da função.',
+              opcoes: ['exigir', 'solicitar', 'receber', 'aceitar'],
+              respostaCorreta: 'exigir',
+              textoLiteral: 'Art. 316 — <mark>Exigir</mark>, para si ou para outrem, direta ou indiretamente, ainda que fora da função ou antes de assumi-la, mas em razão dela, vantagem indevida.',
+              dicaVunesp: 'Concussão = EXIGIR. Corrupção passiva (Art. 317) = solicitar, receber ou aceitar promessa.'
+            },
+            {
+              id: 'ex_cp_q3',
+              tipo: 'multiple_choice',
+              artigoRef: 'Art. 312',
+              enunciado: 'Sobre o peculato (Art. 312 do CP), assinale a alternativa CORRETA:',
+              opcoes: [
+                'Incide somente sobre bens imóveis públicos.',
+                'A pena do peculato culposo é de detenção, de três meses a um ano.',
+                'Não se configura se o bem móvel for particular sob posse pública.',
+                'A pena do peculato doloso é de detenção, de dois a doze anos.'
+              ],
+              respostaCorreta: 1,
+              textoLiteral: 'Art. 312, § 2º — Se o funcionário concorre culposamente para o crime de outrem: Pena - <mark>detenção, de três meses a um ano</mark>.',
+              dicaVunesp: 'Peculato doloso = reclusão (2 a 12 anos); Peculato culposo = detenção (3 meses a 1 ano).'
+            }
+          ]
+        },
+        {
+          id: 'ex_10261_deveres',
+          disciplineId: 'lei_10261',
+          isExample: true,
+          breadcrumb: 'TÍTULO VI — DOS DEVERES, DAS PROIBIÇÕES E DAS RESPONSABILIDADES › CAPÍTULO I',
+          title: 'Dos Deveres e das Proibições do Funcionário Público',
+          subtitle: 'Art. 241 ao Art. 242 • 2 artigos essenciais',
+          readingMin: 5,
+          articles: [
+            {
+              numero: 'Art. 241',
+              rawText: 'São deveres do funcionário:\nI - ser assíduo e pontual;\nII - cumprir as ordens superiores, representando quando forem manifestamente ilegais;\nIII - desempenhar com zelo e presteza os trabalhos de que for incumbido;\nIV - guardar sigilo sobre os assuntos da repartição e, especialmente, sobre despachos, decisões ou providências;',
+              textoHtml: 'São deveres do funcionário:\nI - ser assíduo e pontual;\nII - cumprir as ordens superiores, <mark>representando quando forem manifestamente ilegais</mark>;\nIII - desempenhar com zelo e presteza os trabalhos de que for incumbido;\nIV - <mark>guardar sigilo</mark> sobre os assuntos da repartição e, especialmente, sobre despachos, decisões ou providências;'
+            },
+            {
+              numero: 'Art. 242',
+              rawText: 'Ao funcionário é proibido:\nI - (Revogado);\nII - retirar, sem prévia permissão da autoridade competente, qualquer documento ou objeto existente na repartição;\nIII - entreter-se, durante as horas de trabalho, em palestras, leituras ou outras atividades estranhas ao serviço;\nIV - deixar de comparecer ao serviço sem causa justificada;',
+              textoHtml: 'Ao funcionário é <mark>proibido</mark>:\nII - retirar, <mark>sem prévia permissão da autoridade competente</mark>, qualquer documento ou objeto existente na repartição;\nIII - entreter-se, durante as horas de trabalho, em palestras, leituras ou outras atividades estranhas ao serviço;\nIV - deixar de comparecer ao serviço <mark>sem causa justificada</mark>;'
+            }
+          ],
+          questions: [
+            {
+              id: 'ex_10261_q1',
+              tipo: 'true_false',
+              artigoRef: 'Art. 241, II',
+              enunciado: 'É dever do funcionário público cumprir todas as ordens superiores, exceto representando quando forem manifestamente ilegais.',
+              respostaCorreta: true,
+              textoLiteral: 'Art. 241, II — cumprir as ordens superiores, <mark>representando quando forem manifestamente ilegais</mark>;',
+              dicaVunesp: 'A banca costuma trocar "manifestamente ilegais" por "inconvenientes" ou "inoportunas".'
+            },
+            {
+              id: 'ex_10261_q2',
+              tipo: 'cloze',
+              artigoRef: 'Art. 242, II',
+              enunciado: 'Ao funcionário é proibido retirar, sem prévia _____ da autoridade competente, qualquer documento ou objeto existente na repartição.',
+              opcoes: ['permissão', 'intimação', 'comunicação', 'ciência'],
+              respostaCorreta: 'permissão',
+              textoLiteral: 'Art. 242, II — retirar, sem <mark>prévia permissão</mark> da autoridade competente, qualquer documento ou objeto existente na repartição;',
+              dicaVunesp: 'Não basta "dar ciência" ou "comunicar": o Estatuto exige prévia PERMISSÃO.'
+            }
+          ]
+        }
+      ];
+    }
 
-    const DEFAULT_STATE = () => ({
-      customDisciplines: [],
-      trails: [], // { id, disciplineId, breadcrumb, title, subtitle, readingMin, articles: [{numero, textoHtml}], questions: [...] }
-      progress: {}, // { [trailId]: { mastered: bool, bestScore: number, completedAt: iso } }
-      srs: {}, // { [questionId]: { interval: number, ease: number, dueDate: 'YYYY-MM-DD', reps: number } }
-      questionBank: [], // todas as questões geradas/importadas
-      errors: {}, // { [questionId]: { count: number, lastWrong: iso } }
-      stats: { xp: 0, streak: 0, lastStudyDate: null },
-      prefs: { theme: 'light', viewMode: 'auto', fontSize: 15, showMarks: true, simOffsetDays: 0 }
-    });
+    // =========================================================================
+    // 3. ESTADO GLOBAL & PERSISTÊNCIA LOCAL
+    // =========================================================================
+    function createEmptyState(exemplosRemovidos = false) {
+      const initialTrails = exemplosRemovidos ? [] : createInitialExampleTrails();
+      const initialBank = [];
+      initialTrails.forEach(t => {
+        (t.questions || []).forEach(q => initialBank.push({ ...q, disciplineId: t.disciplineId, trailId: t.id }));
+      });
+      return {
+        customDisciplines: [],
+        trails: initialTrails,
+        exemplosRemovidos,
+        progress: {},
+        srs: {},
+        questionBank: initialBank,
+        errors: {},
+        stats: { xp: 0, streak: 0, lastStudyDate: null, todayCount: 0, todayDate: null },
+        metaDiaria: 15,
+        prefs: { theme: 'light', viewMode: 'auto', fontSize: 15, showMarks: true, simOffsetDays: 0 }
+      };
+    }
+
+    function loadLocalState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return createEmptyState(false);
+        const parsed = JSON.parse(raw);
+        const base = createEmptyState(Boolean(parsed.exemplosRemovidos));
+        return {
+          ...base,
+          ...parsed,
+          stats: { ...base.stats, ...(parsed.stats || {}) },
+          prefs: { ...base.prefs, ...(parsed.prefs || {}) }
+        };
+      } catch {
+        return createEmptyState(false);
+      }
+    }
 
     let state = loadLocalState();
     let ui = {
       activeTab: 'trilhas',
       selectedDisciplineId: null,
-      revisoesSubTab: 'srs', // 'srs' | 'banco'
+      revisoesSubTab: 'srs',
       bankFilterDisc: 'all',
       errorsFilterDisc: 'all',
       importTargetDisc: 'cp',
-      importPreview: null, // { trails: [], totalArticles: 0, rawText: '' }
+      importPreview: null,
       splitLongSections: false,
-      blockSizeFallback: 6
+      blockSizeFallback: 6,
+      authModalTab: 'login'
     };
 
-    // Firebase runtime
-    let fbApp = null, fbAuth = null, fbDb = null, fbUser = null;
-
-    function loadLocalState() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return DEFAULT_STATE();
-        const parsed = JSON.parse(raw);
-        return {
-          ...DEFAULT_STATE(),
-          ...parsed,
-          stats: { ...DEFAULT_STATE().stats, ...(parsed.stats || {}) },
-          prefs: { ...DEFAULT_STATE().prefs, ...(parsed.prefs || {}) }
-        };
-      } catch {
-        return DEFAULT_STATE();
-      }
-    }
-
-    function saveState(syncCloud = true) {
+    function saveState(triggerCloudSync = true) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       } catch (e) {
-        showToast('Erro ao salvar no armazenamento local.');
+        showToast('Aviso: espaço local quase cheio.');
       }
-      if (syncCloud && fbUser && fbDb) {
-        CloudSync.pushAll().catch(() => {});
+      if (triggerCloudSync) {
+        CloudSync.schedulePush();
       }
       updateHeaderBadges();
     }
@@ -471,191 +627,365 @@
       el.textContent = msg;
       el.classList.remove('hidden');
       clearTimeout(el._t);
-      el._t = setTimeout(() => el.classList.add('hidden'), 3200);
+      el._t = setTimeout(() => el.classList.add('hidden'), 3600);
     }
 
     // =========================================================================
-    // 3. FIREBASE (AUTH + CLOUD FIRESTORE)
+    // 4. INTEGRAÇÃO FIREBASE COMPAT v10.12.2 (AUTH + CLOUD FIRESTORE)
     // =========================================================================
     const CloudSync = {
-      async init() {
-        const rawCfg = localStorage.getItem(FB_CONFIG_KEY);
-        if (!rawCfg) {
-          this.updateAuthIndicators();
+      app: null,
+      auth: null,
+      db: null,
+      user: null,
+      source: 'none', // 'code' | 'localStorage' | 'none'
+      syncState: 'local', // 'local' | 'syncing' | 'synced' | 'error'
+      debounceTimer: null,
+
+      getActiveConfig() {
+        if (isValidFirebaseConfig(DEFAULT_FIREBASE_CONFIG)) {
+          this.source = 'code';
+          return DEFAULT_FIREBASE_CONFIG;
+        }
+        try {
+          const raw = localStorage.getItem(FB_CONFIG_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (isValidFirebaseConfig(parsed)) {
+              this.source = 'localStorage';
+              return parsed;
+            }
+          }
+        } catch {}
+        this.source = 'none';
+        return null;
+      },
+
+      init() {
+        const cfg = this.getActiveConfig();
+        if (!cfg || typeof firebase === 'undefined') {
+          this.syncState = 'local';
+          this.updateIndicators();
           return;
         }
         try {
-          const cfg = JSON.parse(rawCfg);
-          if (!cfg.apiKey || !cfg.projectId) return;
-          fbApp = initializeApp(cfg);
-          fbAuth = getAuth(fbApp);
-          fbDb = getFirestore(fbApp);
-          onAuthStateChanged(fbAuth, async (user) => {
-            fbUser = user;
-            this.updateAuthIndicators();
+          this.app = firebase.apps.length ? firebase.app() : firebase.initializeApp(cfg);
+          this.auth = firebase.auth();
+          this.db = firebase.firestore();
+          this.auth.onAuthStateChanged(async (user) => {
+            this.user = user;
             if (user) {
-              await this.pullAll();
-              App.render();
+              await this.pullAndMerge();
+            } else {
+              this.syncState = 'local';
+              this.updateIndicators();
             }
+            App.render();
           });
-        } catch (e) {
-          console.error('Firebase init error:', e);
+        } catch (err) {
+          console.error('Erro ao inicializar Firebase:', err);
+          this.syncState = 'error';
+          this.updateIndicators();
         }
       },
 
-      updateAuthIndicators() {
+      updateIndicators() {
         const sDot = document.getElementById('sidebar-auth-dot');
         const sLbl = document.getElementById('sidebar-auth-label');
         const sSub = document.getElementById('sidebar-sync-status');
         const mDot = document.getElementById('mobile-auth-dot');
-        const mLbl = document.getElementById('mobile-auth-label');
-        if (fbUser) {
-          const name = fbUser.displayName || fbUser.email || 'Conectado';
-          sDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0';
-          mDot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-          sLbl.textContent = name;
-          mLbl.textContent = name;
-          sSub.textContent = 'Sincronizado na nuvem';
+        const mSub = document.getElementById('mobile-sync-status');
+
+        let statusText = '📱 Modo Local';
+        let dotClass = 'bg-slate-400';
+
+        if (this.user) {
+          if (this.syncState === 'syncing') {
+            statusText = '🔄 Sincronizando...';
+            dotClass = 'bg-amber-400 animate-pulse';
+          } else if (this.syncState === 'error') {
+            statusText = '⚠️ Erro de sync';
+            dotClass = 'bg-rose-500';
+          } else {
+            statusText = '☁️ Sincronizado';
+            dotClass = 'bg-emerald-500';
+          }
+          if (sLbl) sLbl.textContent = this.user.displayName || this.user.email || 'Conta conectada';
         } else {
-          sDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0';
-          mDot.className = 'w-2 h-2 rounded-full bg-slate-400';
-          sLbl.textContent = 'Modo Local';
-          mLbl.textContent = 'Modo Local';
-          sSub.textContent = fbAuth ? 'Clique para entrar' : 'Offline (LocalStorage)';
+          if (sLbl) sLbl.textContent = this.auth ? 'Entrar na Conta' : 'Modo Local (Offline)';
+        }
+
+        if (sDot) sDot.className = `w-2.5 h-2.5 rounded-full shrink-0 ${dotClass}`;
+        if (mDot) mDot.className = `w-2 h-2 rounded-full shrink-0 ${dotClass}`;
+        if (sSub) sSub.textContent = statusText;
+        if (mSub) mSub.textContent = statusText;
+      },
+
+      schedulePush() {
+        if (!this.user || !this.db) return;
+        clearTimeout(this.debounceTimer);
+        this.syncState = 'syncing';
+        this.updateIndicators();
+        this.debounceTimer = setTimeout(() => {
+          this.pushAll(false);
+        }, 900);
+      },
+
+      async pushAll(showFeedback = false) {
+        if (!this.user || !this.db) {
+          if (showFeedback) showToast('Faça login para sincronizar na nuvem.');
+          return;
+        }
+        try {
+          this.syncState = 'syncing';
+          this.updateIndicators();
+          const uid = this.user.uid;
+          const now = new Date().toISOString();
+          const baseRef = this.db.collection('users').doc(uid).collection('dados');
+
+          await Promise.all([
+            baseRef.doc('trilhas').set({
+              trails: state.trails || [],
+              customDisciplines: state.customDisciplines || [],
+              exemplosRemovidos: Boolean(state.exemplosRemovidos),
+              updatedAt: now
+            }),
+            baseRef.doc('resultados').set({
+              progress: state.progress || {},
+              srs: state.srs || {},
+              errors: state.errors || {},
+              stats: state.stats || {},
+              metaDiaria: state.metaDiaria || 15,
+              updatedAt: now
+            }),
+            baseRef.doc('banco_questoes').set({
+              questionBank: state.questionBank || [],
+              updatedAt: now
+            })
+          ]);
+
+          this.syncState = 'synced';
+          this.updateIndicators();
+          if (showFeedback) showToast('☁️ Dados sincronizados com o Firebase!');
+        } catch (err) {
+          console.error('Erro pushAll:', err);
+          this.syncState = 'error';
+          this.updateIndicators();
+          if (showFeedback) showToast('Erro ao sincronizar: verifique as regras do Firestore.');
         }
       },
 
-      async pushAll() {
-        if (!fbUser || !fbDb) return;
-        const uid = fbUser.uid;
-        await Promise.all([
-          setDoc(doc(fbDb, 'users', uid, 'dados', 'trilhas'), {
-            trails: state.trails,
-            customDisciplines: state.customDisciplines,
-            updatedAt: new Date().toISOString()
-          }),
-          setDoc(doc(fbDb, 'users', uid, 'dados', 'resultados'), {
-            progress: state.progress,
-            srs: state.srs,
-            errors: state.errors,
-            stats: state.stats,
-            updatedAt: new Date().toISOString()
-          }),
-          setDoc(doc(fbDb, 'users', uid, 'dados', 'banco_questoes'), {
-            questionBank: state.questionBank,
-            updatedAt: new Date().toISOString()
-          })
-        ]);
-      },
-
-      async pullAll() {
-        if (!fbUser || !fbDb) return;
+      async pullAndMerge() {
+        if (!this.user || !this.db) return;
         try {
-          const uid = fbUser.uid;
-          const [tSnap, rSnap, bSnap] = await Promise.all([
-            getDoc(doc(fbDb, 'users', uid, 'dados', 'trilhas')),
-            getDoc(doc(fbDb, 'users', uid, 'dados', 'resultados')),
-            getDoc(doc(fbDb, 'users', uid, 'dados', 'banco_questoes'))
+          this.syncState = 'syncing';
+          this.updateIndicators();
+          const uid = this.user.uid;
+          const baseRef = this.db.collection('users').doc(uid).collection('dados');
+
+          const [tDoc, rDoc, bDoc] = await Promise.all([
+            baseRef.doc('trilhas').get(),
+            baseRef.doc('resultados').get(),
+            baseRef.doc('banco_questoes').get()
           ]);
-          if (tSnap.exists()) {
-            const d = tSnap.data();
-            if (Array.isArray(d.trails)) state.trails = d.trails;
-            if (Array.isArray(d.customDisciplines)) state.customDisciplines = d.customDisciplines;
+
+          const hasCloudData = tDoc.exists || rDoc.exists || bDoc.exists;
+          if (!hasCloudData) {
+            // Primeiro login: envia o estado local atual para a nuvem
+            await this.pushAll(false);
+            showToast('☁️ Conta conectada! Seus dados locais foram enviados para a nuvem.');
+            return;
           }
-          if (rSnap.exists()) {
-            const d = rSnap.data();
-            if (d.progress) state.progress = d.progress;
-            if (d.srs) state.srs = d.srs;
-            if (d.errors) state.errors = d.errors;
-            if (d.stats) state.stats = { ...state.stats, ...d.stats };
+
+          if (tDoc.exists) {
+            const d = tDoc.data();
+            if (typeof d.exemplosRemovidos === 'boolean') state.exemplosRemovidos = d.exemplosRemovidos;
+            if (Array.isArray(d.customDisciplines)) {
+              const mapD = new Map();
+              [...state.customDisciplines, ...d.customDisciplines].forEach(item => mapD.set(item.id, item));
+              state.customDisciplines = state.exemplosRemovidos && !d.customDisciplines.length ? [] : Array.from(mapD.values());
+            }
+            if (Array.isArray(d.trails)) {
+              state.trails = d.trails;
+            }
           }
-          if (bSnap.exists()) {
-            const d = bSnap.data();
+
+          if (rDoc.exists) {
+            const d = rDoc.data();
+            if (d.progress) state.progress = { ...state.progress, ...d.progress };
+            if (d.srs) state.srs = { ...state.srs, ...d.srs };
+            if (d.errors) state.errors = { ...state.errors, ...d.errors };
+            if (d.stats) {
+              state.stats = {
+                ...state.stats,
+                ...d.stats,
+                xp: Math.max(state.stats.xp || 0, d.stats.xp || 0),
+                streak: Math.max(state.stats.streak || 0, d.stats.streak || 0)
+              };
+            }
+            if (d.metaDiaria) state.metaDiaria = d.metaDiaria;
+          }
+
+          if (bDoc.exists) {
+            const d = bDoc.data();
             if (Array.isArray(d.questionBank)) state.questionBank = d.questionBank;
           }
+
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          this.syncState = 'synced';
+          this.updateIndicators();
           updateHeaderBadges();
-          showToast('☁️ Dados sincronizados da nuvem!');
-        } catch (e) {
-          console.error('Pull error:', e);
+          showToast('☁️ Dados carregados da nuvem!');
+        } catch (err) {
+          console.error('Erro pullAndMerge:', err);
+          this.syncState = 'error';
+          this.updateIndicators();
         }
+      },
+
+      translateAuthError(err) {
+        const code = err?.code || '';
+        const host = window.location.hostname || 'seu-app.vercel.app';
+        const map = {
+          'auth/invalid-email': 'E-mail inválido. Verifique a digitação.',
+          'auth/user-disabled': 'Esta conta foi desativada.',
+          'auth/user-not-found': 'Nenhuma conta encontrada com este e-mail.',
+          'auth/wrong-password': 'Senha incorreta. Tente novamente.',
+          'auth/invalid-credential': 'E-mail ou senha incorretos.',
+          'auth/email-already-in-use': 'Este e-mail já está cadastrado. Use a aba "Entrar".',
+          'auth/weak-password': 'A senha deve ter pelo menos 6 caracteres.',
+          'auth/too-many-requests': 'Muitas tentativas seguidas. Aguarde alguns instantes.',
+          'auth/network-request-failed': 'Sem conexão com a internet no momento.',
+          'auth/popup-closed-by-user': 'A janela de login com Google foi fechada antes de concluir.',
+          'auth/unauthorized-domain': `Domínio não autorizado (${host}). No Firebase Console, acesse Authentication > Settings > Authorized domains e adicione "${host}".`
+        };
+        return map[code] || `Erro na autenticação: ${err?.message || 'tente novamente.'}`;
       }
     };
 
     const AuthUI = {
       openModal() {
-        const body = document.getElementById('modal-auth-body');
-        if (!fbAuth) {
-          body.innerHTML = `
-            <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200 mb-4">
-              O Firebase ainda não foi configurado. Vá na aba <strong>Ajustes</strong> e cole o JSON do seu <code>firebaseConfig</code> para ativar login e sincronização em nuvem.
-            </div>
-            <div class="flex justify-end gap-2">
-              <button onclick="AuthUI.closeModal()" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800">Continuar Offline</button>
-              <button onclick="AuthUI.closeModal(); App.setTab('ajustes');" class="px-4 py-2 rounded-xl text-xs font-extrabold bg-indigo-600 text-white">Ir para Ajustes</button>
-            </div>`;
-        } else if (fbUser) {
-          body.innerHTML = `
-            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 mb-4">
-              <p class="text-xs font-bold text-emerald-700 dark:text-emerald-300">Conectado como:</p>
-              <p class="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">${escapeHtml(fbUser.email || fbUser.displayName)}</p>
-            </div>
-            <div class="flex items-center justify-between gap-2">
-              <button onclick="CloudSync.pushAll().then(()=>showToast('☁️ Sincronizado!'))" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">Forçar Sincronização</button>
-              <button onclick="AuthUI.logout()" class="px-4 py-2.5 rounded-xl bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-extrabold">Sair</button>
-            </div>`;
-        } else {
-          body.innerHTML = `
-            <div class="space-y-3">
-              <button onclick="AuthUI.loginGoogle()" class="w-full py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 text-xs font-extrabold flex items-center justify-center gap-2">
-                <span>🔵</span> Entrar com Google
-              </button>
-              <div class="text-center text-[11px] text-slate-400 font-bold">OU E-MAIL E SENHA</div>
-              <input id="auth-email" type="email" placeholder="seu@email.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none" />
-              <input id="auth-pass" type="password" placeholder="Senha (mín. 6 caracteres)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none" />
-              <div class="grid grid-cols-2 gap-2 pt-1">
-                <button onclick="AuthUI.loginEmail()" class="py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold">Entrar</button>
-                <button onclick="AuthUI.registerEmail()" class="py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white text-xs font-extrabold">Criar Conta</button>
-              </div>
-            </div>`;
-        }
+        this.renderModalBody();
         document.getElementById('modal-auth').classList.remove('hidden');
       },
-      closeModal() { document.getElementById('modal-auth').classList.add('hidden'); },
+      closeModal() {
+        document.getElementById('modal-auth').classList.add('hidden');
+      },
+      setTab(tab) {
+        ui.authModalTab = tab;
+        this.renderModalBody();
+      },
+      showError(msg) {
+        const box = document.getElementById('auth-error-box');
+        if (!box) return;
+        box.textContent = msg;
+        box.classList.remove('hidden');
+      },
+      renderModalBody() {
+        const body = document.getElementById('modal-auth-body');
+        if (!CloudSync.auth) {
+          body.innerHTML = `
+            <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200 space-y-2 mb-4">
+              <p class="font-extrabold">Firebase ainda não configurado</p>
+              <p>Preencha o objeto <code>DEFAULT_FIREBASE_CONFIG</code> no topo do <code>index.html</code> ou cole o JSON do seu projeto na aba <strong>Ajustes</strong>.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-end gap-2">
+              <button onclick="AuthUI.closeModal()" class="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800">Continuar no Modo Local (Offline)</button>
+              <button onclick="AuthUI.closeModal(); App.setTab('ajustes');" class="px-4 py-2.5 rounded-xl text-xs font-extrabold bg-indigo-600 text-white">Configurar em Ajustes</button>
+            </div>`;
+          return;
+        }
+
+        if (CloudSync.user) {
+          body.innerHTML = `
+            <div class="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 mb-4 space-y-1">
+              <p class="text-[11px] font-bold uppercase text-emerald-700 dark:text-emerald-300">Usuário autenticado</p>
+              <p class="text-sm font-extrabold text-slate-900 dark:text-white break-all">${escapeHtml(CloudSync.user.displayName || CloudSync.user.email)}</p>
+              ${CloudSync.user.displayName && CloudSync.user.email ? `<p class="text-xs text-slate-500 dark:text-slate-400 break-all">${escapeHtml(CloudSync.user.email)}</p>` : ''}
+            </div>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <button onclick="CloudSync.pushAll(true)" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold">🔄 Sincronizar Agora</button>
+              <button onclick="AuthUI.logout()" class="px-4 py-2.5 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 text-xs font-extrabold">Sair</button>
+            </div>`;
+          return;
+        }
+
+        const isLogin = ui.authModalTab === 'login';
+        body.innerHTML = `
+          <div class="space-y-3.5">
+            <div id="auth-error-box" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-800 text-xs font-semibold text-rose-700 dark:text-rose-300"></div>
+
+            <button onclick="AuthUI.loginGoogle()" class="w-full py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-extrabold flex items-center justify-center gap-2 transition">
+              <span>🔵</span> Continuar com Google
+            </button>
+
+            <div class="flex items-center gap-2">
+              <div class="flex-1 h-px bg-slate-200 dark:bg-slate-800"></div>
+              <span class="text-[10px] font-bold uppercase text-slate-400">ou e-mail e senha</span>
+              <div class="flex-1 h-px bg-slate-200 dark:bg-slate-800"></div>
+            </div>
+
+            <div class="grid grid-cols-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-extrabold">
+              <button onclick="AuthUI.setTab('login')" class="py-1.5 rounded-lg transition ${isLogin ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500'}">Entrar</button>
+              <button onclick="AuthUI.setTab('register')" class="py-1.5 rounded-lg transition ${!isLogin ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500'}">Criar Conta</button>
+            </div>
+
+            <form onsubmit="AuthUI.submitEmail(event)" class="space-y-2.5">
+              <input id="auth-email" type="email" required placeholder="seu@email.com" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+              <input id="auth-pass" type="password" required minlength="6" placeholder="Senha (mín. 6 caracteres)" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
+              <button type="submit" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm">
+                ${isLogin ? 'Entrar com E-mail' : 'Criar Minha Conta'}
+              </button>
+            </form>
+
+            <button onclick="AuthUI.closeModal()" class="w-full py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+              Continuar no Modo Local (Offline)
+            </button>
+          </div>`;
+      },
+
+      async submitEmail(e) {
+        e.preventDefault();
+        const email = document.getElementById('auth-email').value.trim();
+        const pass = document.getElementById('auth-pass').value;
+        try {
+          if (ui.authModalTab === 'login') {
+            await CloudSync.auth.signInWithEmailAndPassword(email, pass);
+            showToast('✅ Login realizado com sucesso!');
+          } else {
+            await CloudSync.auth.createUserWithEmailAndPassword(email, pass);
+            showToast('✅ Conta criada com sucesso!');
+          }
+          this.closeModal();
+        } catch (err) {
+          this.showError(CloudSync.translateAuthError(err));
+        }
+      },
+
       async loginGoogle() {
         try {
-          await signInWithPopup(fbAuth, new GoogleAuthProvider());
+          const provider = new firebase.auth.GoogleAuthProvider();
+          await CloudSync.auth.signInWithPopup(provider);
           this.closeModal();
-          showToast('✅ Login com Google realizado!');
-        } catch (e) { showToast('Erro no login Google: ' + e.message); }
+          showToast('✅ Conectado com Google!');
+        } catch (err) {
+          this.showError(CloudSync.translateAuthError(err));
+        }
       },
-      async loginEmail() {
-        const email = document.getElementById('auth-email').value.trim();
-        const pass = document.getElementById('auth-pass').value;
-        try {
-          await signInWithEmailAndPassword(fbAuth, email, pass);
-          this.closeModal();
-          showToast('✅ Bem-vindo de volta!');
-        } catch (e) { showToast('Erro ao entrar: ' + e.message); }
-      },
-      async registerEmail() {
-        const email = document.getElementById('auth-email').value.trim();
-        const pass = document.getElementById('auth-pass').value;
-        try {
-          await createUserWithEmailAndPassword(fbAuth, email, pass);
-          this.closeModal();
-          showToast('✅ Conta criada com sucesso!');
-        } catch (e) { showToast('Erro ao criar conta: ' + e.message); }
-      },
+
       async logout() {
-        await signOut(fbAuth);
-        this.closeModal();
-        showToast('Desconectado. Modo local ativo.');
+        try {
+          await CloudSync.auth.signOut();
+          this.closeModal();
+          showToast('Desconectado. Operando em Modo Local.');
+        } catch (err) {
+          showToast('Erro ao sair: ' + err.message);
+        }
       }
     };
 
     // =========================================================================
-    // 4. GERENCIAMENTO DE DISCIPLINAS PERSONALIZADAS
+    // 5. DISCIPLINAS PERSONALIZADAS
     // =========================================================================
     const DisciplineUI = {
       openModal() {
@@ -698,13 +1028,13 @@
     };
 
     // =========================================================================
-    // 5. MOTOR DE REGEX HIERÁRQUICO (0% DE PERDA) & GERADOR DE QUESTÕES
+    // 6. PARSER REGEX HIERÁRQUICO (0% DE PERDA) & GERADOR GEMINI / OFFLINE
     // =========================================================================
     const ParserEngine = {
       highlightVunesp(text) {
         const terms = [
           /(\b\d+\s*(?:dias?|meses|mês|anos?|horas?)\b)/gi,
-          /(\b(?:salvo|exceto|vedado|vedada|proibido|obrigatório|obrigatória|facultativo|facultativa|imprescindível|inafiançável|imprescritível|reclusão|detenção|multa|demissão|suspensão|advertência|nulo|nula|sempre|nunca|somente|exclusivamente|privativamente)\b)/gi
+          /(\b(?:salvo|exceto|vedado|vedada|proibido|obrigatório|obrigatória|facultativo|facultativa|imprescindível|inafiançável|imprescritível|reclusão|detenção|multa|demissão|suspensão|advertência|nulo|nula|sempre|nunca|somente|exclusivamente|privativamente|exigir|solicitar|manifestamente ilegais|prévia permissão)\b)/gi
         ];
         let html = escapeHtml(text);
         terms.forEach(rx => { html = html.replace(rx, '<mark>$1</mark>'); });
@@ -737,11 +1067,13 @@
           const line = lines[i];
           const hMatch = line.match(rxHeading);
           if (hMatch) {
-            const levelRaw = hMatch[1].toUpperCase().replace('I', 'Í').replace('A', 'Ã');
-            const level = levelRaw.startsWith('T') ? 'TÍTULO' : levelRaw.startsWith('C') ? 'CAPÍTULO' : levelRaw.startsWith('SUB') ? 'SUBSEÇÃO' : 'SEÇÃO';
+            const rawLevel = hMatch[1].toUpperCase();
+            const level = rawLevel.startsWith('T') ? 'TÍTULO'
+              : rawLevel.startsWith('C') ? 'CAPÍTULO'
+              : rawLevel.startsWith('SUB') ? 'SUBSEÇÃO' : 'SEÇÃO';
             let label = `${level} ${hMatch[2].toUpperCase()}`;
             let rest = (hMatch[3] || '').replace(/^[-–—:\s]+/, '').trim();
-            if (!rest && lines[i + 1] && !rxHeading.test(lines[i + 1]) && !rxArt.test(lines[i + 1]) && lines[i + 1].length < 110) {
+            if (!rest && lines[i + 1] && !rxHeading.test(lines[i + 1]) && !rxArt.test(lines[i + 1]) && lines[i + 1].length < 120) {
               rest = lines[++i];
             }
             if (rest) label += ` — ${rest}`;
@@ -772,14 +1104,13 @@
           }
         }
 
-        // Filtra seções com artigos e aplica divisão opcional se > 12 artigos ou sem cabeçalhos
-        let finalTrails = [];
+        const finalTrails = [];
         const nonEmpty = sections.filter(s => s.articles.length > 0);
-        const hasMultipleHeadings = nonEmpty.length > 1 || (nonEmpty.length === 1 && nonEmpty[0].breadcrumb !== 'Disposições Gerais');
+        const hasHeadings = nonEmpty.length > 1 || (nonEmpty.length === 1 && nonEmpty[0].breadcrumb !== 'Disposições Gerais');
 
         nonEmpty.forEach(sec => {
-          const shouldSplit = (!hasMultipleHeadings && sec.articles.length > fallbackBlock) || (splitLong && sec.articles.length > 12);
-          const chunkSize = !hasMultipleHeadings ? fallbackBlock : 10;
+          const shouldSplit = (!hasHeadings && sec.articles.length > fallbackBlock) || (splitLong && sec.articles.length > 12);
+          const chunkSize = !hasHeadings ? fallbackBlock : 10;
           if (shouldSplit) {
             for (let idx = 0; idx < sec.articles.length; idx += chunkSize) {
               const slice = sec.articles.slice(idx, idx + chunkSize);
@@ -819,29 +1150,31 @@
         const questions = [];
         const swaps = [
           ['obrigatório', 'facultativo'], ['facultativo', 'obrigatório'],
-          ['vedado', 'permitido'], ['reclusão', 'detenção'], ['detenção', 'reclusão'],
-          ['salvo', 'inclusive'], ['exceto', 'inclusive'], ['sempre', 'nunca'],
-          ['15 dias', '30 dias'], ['30 dias', '15 dias'], ['5 dias', '10 dias'], ['10 dias', '5 dias']
+          ['vedado', 'permitido'], ['proibido', 'autorizado'],
+          ['reclusão', 'detenção'], ['detenção', 'reclusão'],
+          ['salvo', 'inclusive'], ['exceto', 'inclusive'],
+          ['sempre', 'nunca'], ['15 dias', '30 dias'], ['30 dias', '15 dias'],
+          ['5 dias', '10 dias'], ['10 dias', '5 dias']
         ];
-        const arts = trail.articles;
+        const arts = trail.articles || [];
         if (!arts.length) return [];
 
         for (let i = 0; i < Math.min(count, Math.max(3, arts.length * 2)); i++) {
           const art = arts[i % arts.length];
           const clean = (art.rawText || art.textoHtml.replace(/<[^>]+>/g, '')).split('\n')[0].trim();
-          if (clean.length < 20) continue;
+          if (clean.length < 18) continue;
           const tipo = i % 3 === 0 ? 'true_false' : i % 3 === 1 ? 'cloze' : 'multiple_choice';
-          const qId = `q_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+          const qId = `q_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 6)}`;
 
           if (tipo === 'true_false') {
-            let enunciado = `Segundo o ${art.numero}, ${clean.charAt(0).toLowerCase() + clean.slice(1)}`;
+            let enunciado = `De acordo com o ${art.numero}, ${clean.charAt(0).toLowerCase() + clean.slice(1)}`;
             let isTrue = i % 2 === 0;
-            let dica = 'Atenção à redação literal cobrada pela banca VUNESP.';
+            let dica = 'Fique atento à literalidade exata do artigo cobrada pela VUNESP.';
             if (!isTrue) {
               const found = swaps.find(([a]) => new RegExp(`\\b${a}\\b`, 'i').test(enunciado));
               if (found) {
                 enunciado = enunciado.replace(new RegExp(`\\b${found[0]}\\b`, 'i'), found[1]);
-                dica = `Pegadinha clássica: a lei diz "${found[0]}", e não "${found[1]}".`;
+                dica = `Pegadinha VUNESP: a lei prevê "${found[0]}", e não "${found[1]}".`;
               } else {
                 isTrue = true;
               }
@@ -864,24 +1197,24 @@
               questions.push({
                 id: qId, tipo: 'cloze', artigoRef: art.numero, enunciado, opcoes,
                 respostaCorreta: target, textoLiteral: `${art.numero} — ${art.textoHtml}`,
-                dicaVunesp: `Memorize o termo exato "${target}" no ${art.numero}.`
+                dicaVunesp: `Memorize o termo-chave "${target}" no ${art.numero}.`
               });
             }
           } else {
-            const enunciado = `De acordo com o ${art.numero}, qual alternativa reproduz corretamente a previsão legal?`;
-            const snippet = clean.length > 110 ? clean.slice(0, 107) + '...' : clean;
+            const enunciado = `Segundo o ${art.numero}, qual alternativa reproduz fielmente a disposição legal?`;
+            const snippet = clean.length > 115 ? clean.slice(0, 112) + '...' : clean;
             const opcoes = [
               snippet,
-              'É sempre facultativo, independentemente de previsão legal expressa.',
-              'Aplica-se exclusivamente mediante autorização prévia do Ministério Público.',
-              'Não produz efeitos jurídicos até regulamentação por decreto.'
+              'Trata-se de faculdade exclusiva da autoridade, dispensada previsão expressa.',
+              'Sua aplicação depende sempre de homologação prévia do Ministério Público.',
+              'Não produz efeitos até regulamentação específica por portaria.'
             ];
             if (!existingEnunciados.has(enunciado)) {
               existingEnunciados.add(enunciado);
               questions.push({
                 id: qId, tipo: 'multiple_choice', artigoRef: art.numero, enunciado, opcoes,
                 respostaCorreta: 0, textoLiteral: `${art.numero} — ${art.textoHtml}`,
-                dicaVunesp: 'A VUNESP exige fidelidade absoluta ao texto seco do artigo.'
+                dicaVunesp: 'A banca VUNESP cobra a letra seca da lei sem acréscimos.'
               });
             }
           }
@@ -895,9 +1228,9 @@
 
         const articlesText = trail.articles.map(a => `${a.numero}: ${a.rawText || a.textoHtml.replace(/<[^>]+>/g, '')}`).join('\n\n');
         const avoidList = Array.from(existingEnunciados).slice(-10).join(' | ');
-        const prompt = `Atue como especialista na banca VUNESP (Escrevente TJSP).
+        const prompt = `Atue como especialista na banca VUNESP (Escrevente Técnico Judiciário TJSP).
 Disciplina: ${disciplineName}. Capítulo: ${trail.title}.
-Gere EXATAMENTE ${count} questões inéditas (equilibrando os tipos "true_false", "cloze" e "multiple_choice") baseadas SOMENTE nos artigos abaixo.
+Gere EXATAMENTE ${count} questões inéditas (equilibrando "true_false", "cloze" e "multiple_choice") baseadas SOMENTE nos artigos abaixo.
 Evite repetir estes enunciados: ${avoidList || 'nenhum'}.
 Retorne APENAS um array JSON válido neste formato:
 [
@@ -926,18 +1259,18 @@ ${articlesText.slice(0, 12000)}`;
             ...q,
             id: `gq_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 6)}`
           }));
-        } catch (e) {
-          console.warn('Fallback offline acionado:', e);
+        } catch (err) {
+          console.warn('Fallback offline acionado:', err);
           return this.generateOffline(trail, existingEnunciados, count);
         }
       }
     };
 
     // =========================================================================
-    // 6. PLAYER FULL-FOCUS (FASE 1 LEITURA CRONOMETRADA / FASE 2 ARENA / SRS)
+    // 7. PLAYER FULL-FOCUS (FASE 1 LEITURA / FASE 2 ARENA / SRS / SIMULADO)
     // =========================================================================
     const Player = {
-      mode: null, // 'reading' | 'arena' | 'srs' | 'simulado'
+      mode: null,
       trail: null,
       questions: [],
       qIndex: 0,
@@ -962,7 +1295,7 @@ ${articlesText.slice(0, 12000)}`;
       openArena(trailId) {
         const trail = state.trails.find(t => t.id === trailId);
         if (!trail || !trail.questions?.length) {
-          showToast('Esta trilha ainda não possui questões. Clique em ✨ Gerar Novos Exercícios.');
+          showToast('Esta trilha ainda não tem questões. Clique em ✨ Gerar Novos Exercícios.');
           return;
         }
         clearInterval(this.timerInterval);
@@ -1006,7 +1339,7 @@ ${articlesText.slice(0, 12000)}`;
             } else {
               clearInterval(this.timerInterval);
               this.timerRunning = false;
-              showToast('⏰ Tempo de leitura concluído! Hora da Arena de Games.');
+              showToast('⏰ Tempo de leitura concluído! Partiu Arena de Games.');
               this.renderReading();
             }
           }, 1000);
@@ -1046,10 +1379,8 @@ ${articlesText.slice(0, 12000)}`;
           <p class="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 truncate">Fase 1 • Leitura Ativa • ${escapeHtml(disc.short)}</p>
           <p class="text-xs font-extrabold text-slate-900 dark:text-white truncate">${escapeHtml(t.title)}</p>`;
 
-        const body = document.getElementById('player-body');
-        body.innerHTML = `
+        document.getElementById('player-body').innerHTML = `
           <div class="max-w-3xl mx-auto space-y-4">
-            <!-- Barra de Controle do Timer & Fonte -->
             <div class="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-sm">
               <div class="flex items-center gap-2">
                 <span id="reading-timer-display" class="font-mono text-lg font-black text-indigo-600 dark:text-indigo-400">${this.formatTime(this.timerSec)}</span>
@@ -1065,7 +1396,6 @@ ${articlesText.slice(0, 12000)}`;
               </div>
             </div>
 
-            <!-- Cartões dos Artigos -->
             <div class="space-y-3 law-text ${state.prefs.showMarks ? '' : 'hide-marks'}" style="font-size: ${state.prefs.fontSize}px">
               ${t.articles.map(a => `
                 <article class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-sm leading-relaxed">
@@ -1075,7 +1405,6 @@ ${articlesText.slice(0, 12000)}`;
               `).join('')}
             </div>
 
-            <!-- Ações Finais da Leitura -->
             <div class="flex flex-col sm:flex-row gap-2.5 pt-2 pb-8">
               <button onclick="Player.openArena('${t.id}')" class="flex-1 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-extrabold shadow-lg shadow-indigo-600/25">
                 🎮 Ir para Arena de Games (${t.questions?.length || 0} questões)
@@ -1090,7 +1419,7 @@ ${articlesText.slice(0, 12000)}`;
       renderQuestion() {
         const q = this.questions[this.qIndex];
         const total = this.questions.length;
-        const pct = Math.round(((this.qIndex) / total) * 100);
+        const pct = Math.round((this.qIndex / total) * 100);
         const typeLabel = q.tipo === 'true_false' ? 'Certo ou Errado' : q.tipo === 'cloze' ? 'Complete a Lacuna' : 'Múltipla Escolha';
 
         document.getElementById('player-header-info').innerHTML = `
@@ -1144,11 +1473,11 @@ ${articlesText.slice(0, 12000)}`;
 
         if (isCorrect) {
           this.correctCount++;
-          state.stats.xp += 10;
+          state.stats.xp = (state.stats.xp || 0) + 10;
         } else {
           state.errors[q.id] = { count: (state.errors[q.id]?.count || 0) + 1, lastWrong: new Date().toISOString() };
         }
-        App.touchStreak();
+        App.recordDailyProgress();
         saveState();
 
         document.getElementById('question-options').classList.add('opacity-50', 'pointer-events-none');
@@ -1156,9 +1485,9 @@ ${articlesText.slice(0, 12000)}`;
         fb.classList.remove('hidden');
         fb.innerHTML = `
           <div class="p-4 rounded-2xl border-2 ${isCorrect ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500' : 'bg-rose-50 dark:bg-rose-950/40 border-rose-500'} space-y-3 animate-fade-in">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-black ${isCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}">${isCorrect ? '✅ Resposta Correta! (+10 XP)' : '❌ Pegadinha da Banca!'}</span>
-            </div>
+            <span class="text-sm font-black ${isCorrect ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}">
+              ${isCorrect ? '✅ Resposta Correta! (+10 XP)' : '❌ Pegadinha da Banca! (Enviada ao Caderno de Erros)'}
+            </span>
             <div class="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs leading-relaxed law-text">
               <p class="text-[10px] font-bold uppercase text-slate-400 mb-1">Texto Literal do Artigo</p>
               ${q.textoLiteral || ''}
@@ -1189,11 +1518,8 @@ ${articlesText.slice(0, 12000)}`;
 
         this.qIndex++;
         this.answered = false;
-        if (this.qIndex < this.questions.length) {
-          this.renderQuestion();
-        } else {
-          this.renderSummary();
-        }
+        if (this.qIndex < this.questions.length) this.renderQuestion();
+        else this.renderSummary();
       },
 
       renderSummary() {
@@ -1208,7 +1534,7 @@ ${articlesText.slice(0, 12000)}`;
             bestScore: Math.max(prev.bestScore, pct),
             completedAt: new Date().toISOString()
           };
-          if (passed && !prev.mastered) state.stats.xp += 50;
+          if (passed && !prev.mastered) state.stats.xp = (state.stats.xp || 0) + 50;
           saveState();
         }
 
@@ -1231,7 +1557,7 @@ ${articlesText.slice(0, 12000)}`;
     };
 
     // =========================================================================
-    // 7. CONTROLADOR PRINCIPAL DO APP (5 ABAS + RENDERIZAÇÃO)
+    // 8. CONTROLADOR PRINCIPAL DO APP
     // =========================================================================
     const App = {
       init() {
@@ -1289,24 +1615,32 @@ ${articlesText.slice(0, 12000)}`;
         if (Player.mode === 'reading') Player.renderReading();
       },
 
-      touchStreak() {
+      recordDailyProgress() {
         const today = getTodayStr();
-        if (state.stats.lastStudyDate === today) return;
-        const yesterday = addDaysStr(today, -1);
-        state.stats.streak = state.stats.lastStudyDate === yesterday ? (state.stats.streak || 0) + 1 : 1;
-        state.stats.lastStudyDate = today;
+        if (state.stats.todayDate !== today) {
+          state.stats.todayDate = today;
+          state.stats.todayCount = 0;
+        }
+        state.stats.todayCount = (state.stats.todayCount || 0) + 1;
+        if (state.stats.lastStudyDate !== today) {
+          const yesterday = addDaysStr(today, -1);
+          state.stats.streak = state.stats.lastStudyDate === yesterday ? (state.stats.streak || 0) + 1 : 1;
+          state.stats.lastStudyDate = today;
+        }
       },
 
       simulateDays(delta) {
         state.prefs.simOffsetDays = (state.prefs.simOffsetDays || 0) + delta;
         saveState(false);
         this.updateSimBanner();
+        updateHeaderBadges();
         this.render();
       },
       resetSimulatedDate() {
         state.prefs.simOffsetDays = 0;
         saveState(false);
         this.updateSimBanner();
+        updateHeaderBadges();
         this.render();
       },
       updateSimBanner() {
@@ -1324,10 +1658,10 @@ ${articlesText.slice(0, 12000)}`;
         const trail = state.trails.find(t => t.id === trailId);
         if (!trail) return;
         const disc = getDisciplineById(trail.disciplineId);
-        showToast('✨ Gerando novos exercícios...');
+        showToast('✨ Gerando novos exercícios inéditos...');
         const existing = new Set((trail.questions || []).map(q => q.enunciado));
         const news = await QuestionGen.generateWithGemini(trail, disc.name, existing, 4);
-        if (!news.length) return showToast('Não foi possível gerar questões inéditas.');
+        if (!news.length) return showToast('Não foi possível gerar questões inéditas agora.');
         trail.questions = [...(trail.questions || []), ...news];
         news.forEach(q => state.questionBank.push({ ...q, disciplineId: trail.disciplineId, trailId: trail.id }));
         saveState();
@@ -1341,7 +1675,7 @@ ${articlesText.slice(0, 12000)}`;
         state.questionBank = state.questionBank.filter(q => q.trailId !== trailId);
         delete state.progress[trailId];
         saveState();
-        showToast('Trilha removida.');
+        showToast('Trilha excluída.');
         this.render();
       },
 
@@ -1353,13 +1687,13 @@ ${articlesText.slice(0, 12000)}`;
           const result = await mammoth.extractRawText({ arrayBuffer });
           this.analyzeRawText(result.value);
           showToast(`📄 "${file.name}" lido com sucesso!`);
-        } catch (e) {
-          showToast('Erro ao ler .docx: ' + e.message);
+        } catch (err) {
+          showToast('Erro ao ler arquivo .docx: ' + err.message);
         }
       },
 
       analyzeRawText(rawText) {
-        if (!rawText || !rawText.trim()) return showToast('Cole ou envie um texto de lei primeiro.');
+        if (!rawText || !rawText.trim()) return showToast('Envie um .docx ou cole o texto da lei primeiro.');
         const parsed = ParserEngine.parseLawText(rawText, ui.splitLongSections, ui.blockSizeFallback);
         ui.importPreview = { ...parsed, rawText };
         this.render();
@@ -1370,11 +1704,18 @@ ${articlesText.slice(0, 12000)}`;
         const selected = ui.importPreview.trails.filter(t => t.selected);
         if (!selected.length) return showToast('Selecione ao menos uma trilha.');
         const disc = getDisciplineById(ui.importTargetDisc);
-        const btn = document.getElementById('btn-commit-import');
-        if (btn) { btn.disabled = true; btn.textContent = '⏳ Gerando trilhas e exercícios...'; }
+
+        const progBox = document.getElementById('import-progress-box');
+        const progBar = document.getElementById('import-progress-bar');
+        const progTxt = document.getElementById('import-progress-text');
+        if (progBox) progBox.classList.remove('hidden');
 
         for (let i = 0; i < selected.length; i++) {
           const item = selected[i];
+          const pct = Math.round(((i + 1) / selected.length) * 100);
+          if (progBar) progBar.style.width = pct + '%';
+          if (progTxt) progTxt.textContent = `Processando trilha ${i + 1} de ${selected.length}: ${item.title}`;
+
           const trailId = `tr_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 5)}`;
           const questions = useGemini
             ? await QuestionGen.generateWithGemini(item, disc.name, new Set(), 6)
@@ -1398,7 +1739,7 @@ ${articlesText.slice(0, 12000)}`;
         ui.importPreview = null;
         ui.selectedDisciplineId = disc.id;
         ui.activeTab = 'trilhas';
-        showToast(`🎉 ${selected.length} trilha(s) criada(s) em ${disc.short}!`);
+        showToast(`🎉 ${selected.length} trilha(s) adicionada(s) em ${disc.short}!`);
         this.render();
       },
 
@@ -1409,24 +1750,29 @@ ${articlesText.slice(0, 12000)}`;
         a.href = URL.createObjectURL(blob);
         a.download = `decorei_tjsp_backup_${getTodayStr()}.json`;
         a.click();
-        showToast('💾 Backup exportado!');
+        showToast('💾 Backup JSON exportado!');
       },
+
       importBackup(file) {
         if (!file) return;
         const reader = new FileReader();
         reader.onload = () => {
           try {
             const parsed = JSON.parse(reader.result);
-            state = { ...DEFAULT_STATE(), ...parsed };
+            const base = createEmptyState(Boolean(parsed.exemplosRemovidos));
+            state = { ...base, ...parsed, prefs: { ...base.prefs, ...(parsed.prefs || {}) } };
             saveState();
             this.applyTheme();
             this.applyViewMode();
             showToast('✅ Backup restaurado com sucesso!');
             this.render();
-          } catch { showToast('Arquivo de backup inválido.'); }
+          } catch {
+            showToast('Arquivo JSON inválido.');
+          }
         };
         reader.readAsText(file);
       },
+
       openWipeModal() {
         document.getElementById('wipe-confirm-input').value = '';
         document.getElementById('modal-wipe').classList.remove('hidden');
@@ -1438,19 +1784,43 @@ ${articlesText.slice(0, 12000)}`;
         const val = document.getElementById('wipe-confirm-input').value.trim().toUpperCase();
         if (val !== 'ZERAR') return showToast('Digite exatamente ZERAR para confirmar.');
         const keepPrefs = { ...state.prefs, simOffsetDays: 0 };
-        state = DEFAULT_STATE();
+        state = createEmptyState(true); // exemplosRemovidos = true
         state.prefs = keepPrefs;
-        saveState(true);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        if (CloudSync.user && CloudSync.db) {
+          await CloudSync.pushAll(false);
+        }
         this.closeWipeModal();
         ui.selectedDisciplineId = null;
         ui.importPreview = null;
-        showToast('🗑️ Tudo limpo! Pronto para começar do zero.');
+        updateHeaderBadges();
+        showToast('🗑️ Tudo limpo! Biblioteca zerada para você começar do zero.');
         this.render();
+      },
+
+      saveFirebaseOverride() {
+        const raw = document.getElementById('input-fb-config').value.trim();
+        if (!raw) {
+          localStorage.removeItem(FB_CONFIG_KEY);
+          showToast('Override local do Firebase removido. Recarregando...');
+          setTimeout(() => location.reload(), 700);
+          return;
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          if (!isValidFirebaseConfig(parsed)) {
+            return showToast('JSON incompleto: apiKey, authDomain e projectId são obrigatórios.');
+          }
+          localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(parsed));
+          showToast('✅ Firebase configurado! Recarregando...');
+          setTimeout(() => location.reload(), 700);
+        } catch {
+          showToast('JSON inválido. Use aspas duplas nas chaves e valores.');
+        }
       },
 
       // ---- RENDERIZAÇÃO DAS 5 ABAS ----
       render() {
-        // Atualiza estado ativo dos botões de navegação
         document.querySelectorAll('.nav-btn').forEach(b => {
           const active = b.dataset.nav === ui.activeTab;
           b.className = `nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-bold transition ${active ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'}`;
@@ -1536,7 +1906,6 @@ ${articlesText.slice(0, 12000)}`;
             </div>`;
         }
 
-        // Grade de todas as 15 disciplinas + personalizadas
         const totalTrails = state.trails.length;
         const totalMastered = state.trails.filter(t => state.progress[t.id]?.mastered).length;
         return `
@@ -1544,7 +1913,7 @@ ${articlesText.slice(0, 12000)}`;
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 class="text-lg font-black text-slate-900 dark:text-white">Trilhas do Edital TJSP</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400">${allDiscs.length} legislações disponíveis • ${totalMastered}/${totalTrails} trilhas dominadas</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">${allDiscs.length} legislações • ${totalMastered}/${totalTrails} trilhas dominadas com 100%</p>
               </div>
               <button onclick="DisciplineUI.openModal()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-sm">
                 + Nova Disciplina / Lei
@@ -1558,7 +1927,7 @@ ${articlesText.slice(0, 12000)}`;
                 const dMastered = dTrails.filter(t => state.progress[t.id]?.mastered).length;
                 const pct = dTrails.length ? Math.round((dMastered / dTrails.length) * 100) : 0;
                 return `
-                  <div onclick="ui.selectedDisciplineId='${d.id}'; App.render();" class="cursor-pointer group bg-white dark:bg-slate-800/80 border ${c.border} hover:border-indigo-500 rounded-2xl p-4 flex flex-col justify-between gap-3 transition shadow-sm hover:shadow-md">
+                  <div onclick="ui.selectedDisciplineId='${d.id}'; App.render();" class="cursor-pointer bg-white dark:bg-slate-800/80 border ${c.border} hover:border-indigo-500 rounded-2xl p-4 flex flex-col justify-between gap-3 transition shadow-sm hover:shadow-md">
                     <div class="flex items-start justify-between gap-2">
                       <div class="flex items-center gap-2.5 min-w-0">
                         <span class="w-9 h-9 rounded-xl ${c.bg} flex items-center justify-center text-lg shrink-0">${d.icon}</span>
@@ -1567,7 +1936,7 @@ ${articlesText.slice(0, 12000)}`;
                           ${d.custom ? `<span class="ml-1 text-[9px] font-bold text-indigo-500">Personalizada</span>` : ''}
                         </div>
                       </div>
-                      ${d.custom && dTrails.length === 0 ? `<button onclick="event.stopPropagation(); DisciplineUI.deleteCustom('${d.id}')" title="Excluir disciplina vazia" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs">🗑️</button>` : ''}
+                      ${d.custom && dTrails.length === 0 ? `<button onclick="event.stopPropagation(); DisciplineUI.deleteCustom('${d.id}')" title="Excluir disciplina vazia" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 text-xs">🗑️</button>` : ''}
                     </div>
                     <p class="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug line-clamp-2">${escapeHtml(d.name)}</p>
                     <div>
@@ -1587,10 +1956,7 @@ ${articlesText.slice(0, 12000)}`;
 
       renderRevisoesTab() {
         const today = getTodayStr();
-        const dueQuestions = state.questionBank.filter(q => {
-          const s = state.srs[q.id];
-          return s && s.dueDate <= today;
-        });
+        const dueQuestions = state.questionBank.filter(q => state.srs[q.id] && state.srs[q.id].dueDate <= today);
         const allDiscs = getAllDisciplines();
         const filteredBank = ui.bankFilterDisc === 'all'
           ? state.questionBank
@@ -1599,7 +1965,7 @@ ${articlesText.slice(0, 12000)}`;
         return `
           <div class="space-y-5 animate-fade-in">
             <div class="flex items-center gap-2 bg-slate-200/70 dark:bg-slate-800 p-1 rounded-xl w-fit">
-              <button onclick="ui.revisoesSubTab='srs'; App.render();" class="px-4 py-1.5 rounded-lg text-xs font-extrabold ${ui.revisoesSubTab === 'srs' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500'}">🔄 Revisões SRS (${dueQuestions.length})</button>
+              <button onclick="ui.revisoesSubTab='srs'; App.render();" class="px-4 py-1.5 rounded-lg text-xs font-extrabold ${ui.revisoesSubTab === 'srs' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500'}">🔄 Fila SRS (${dueQuestions.length})</button>
               <button onclick="ui.revisoesSubTab='banco'; App.render();" class="px-4 py-1.5 rounded-lg text-xs font-extrabold ${ui.revisoesSubTab === 'banco' ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm' : 'text-slate-500'}">📚 Banco de Questões (${state.questionBank.length})</button>
             </div>
 
@@ -1607,7 +1973,7 @@ ${articlesText.slice(0, 12000)}`;
               <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center space-y-3">
                 <div class="text-4xl">${dueQuestions.length ? '⏰' : '✅'}</div>
                 <h3 class="text-base font-extrabold">${dueQuestions.length ? `${dueQuestions.length} revisão(ões) pendente(s) hoje` : 'Tudo revisado por hoje!'}</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400">O algoritmo SM-2 agenda automaticamente cada questão conforme sua facilidade.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400">O algoritmo SM-2 agenda automaticamente cada artigo conforme sua facilidade (Errei, Difícil 1d, Bom 3d, Fácil 7+d).</p>
                 ${dueQuestions.length ? `<button onclick="App.startDueSRS()" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold shadow-md">▶ Iniciar Revisão do Dia</button>` : ''}
               </div>
             ` : `
@@ -1630,7 +1996,7 @@ ${articlesText.slice(0, 12000)}`;
                       </div>
                       <p class="font-semibold text-slate-800 dark:text-slate-100 line-clamp-3">${escapeHtml(q.enunciado)}</p>
                     </div>
-                  `).join('') || '<p class="text-xs text-slate-500 col-span-full text-center py-8">Nenhuma questão no banco para este filtro.</p>'}
+                  `).join('') || '<p class="text-xs text-slate-500 col-span-full text-center py-8">Nenhuma questão cadastrada neste filtro.</p>'}
                 </div>
               </div>
             `}
@@ -1657,17 +2023,16 @@ ${articlesText.slice(0, 12000)}`;
           <div class="space-y-5 animate-fade-in">
             <div>
               <h2 class="text-lg font-black text-slate-900 dark:text-white">📥 Importar Lei Seca (DOCX ou Texto)</h2>
-              <p class="text-xs text-slate-500 dark:text-slate-400">Divisão hierárquica automática por TÍTULO, CAPÍTULO, SEÇÃO, SUBSEÇÃO e Artigo (0% de perda).</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Divisão hierárquica automática por TÍTULO, CAPÍTULO, SEÇÃO, SUBSEÇÃO e Art. garantindo 100% dos artigos mapeados.</p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 responsive-grid-2">
-              <!-- Passo 1: Destino + Upload -->
               <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-4">
                 <div>
                   <div class="flex items-center justify-between gap-2 mb-1.5">
                     <label class="text-xs font-extrabold text-slate-700 dark:text-slate-200">1. Disciplina de destino</label>
                     <button onclick="DisciplineUI.openModal()" class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[11px] font-extrabold hover:bg-indigo-100">
-                      + Nova Disciplina / Lei
+                      + Nova Disciplina
                     </button>
                   </div>
                   <select onchange="ui.importTargetDisc=this.value" class="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500">
@@ -1680,7 +2045,7 @@ ${articlesText.slice(0, 12000)}`;
                   <label class="flex flex-col items-center justify-center p-5 border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition">
                     <span class="text-2xl mb-1">📄</span>
                     <span class="text-xs font-extrabold text-indigo-700 dark:text-indigo-300">Clique para selecionar .docx</span>
-                    <span class="text-[10px] text-slate-500 mt-0.5">Processado 100% localmente com mammoth.js</span>
+                    <span class="text-[10px] text-slate-500 mt-0.5">Leitura 100% local via mammoth.js</span>
                     <input type="file" accept=".docx" class="hidden" onchange="App.handleDocxUpload(this.files[0])" />
                   </label>
                 </div>
@@ -1697,13 +2062,12 @@ ${articlesText.slice(0, 12000)}`;
                 </label>
               </div>
 
-              <!-- Passo 2: Painel de Auditoria e Confirmação -->
               <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex flex-col justify-between">
                 ${!ui.importPreview ? `
                   <div class="flex-1 flex flex-col items-center justify-center text-center py-10 text-slate-400 space-y-2">
                     <span class="text-3xl">🔍</span>
                     <p class="text-xs font-bold">Painel de Auditoria</p>
-                    <p class="text-[11px] max-w-xs">Suba um .docx ou cole a lei ao lado para visualizar todas as trilhas detectadas antes de salvar.</p>
+                    <p class="text-[11px] max-w-xs">Suba um .docx ou cole o texto da lei ao lado para auditar todas as trilhas antes de gerar os exercícios.</p>
                   </div>
                 ` : `
                   <div class="space-y-3">
@@ -1713,6 +2077,13 @@ ${articlesText.slice(0, 12000)}`;
                         <p class="text-[11px] text-emerald-600 dark:text-emerald-400">${ui.importPreview.totalArticles} artigos em ${ui.importPreview.trails.length} trilha(s)</p>
                       </div>
                       <button onclick="ui.importPreview=null; App.render();" class="text-[11px] font-bold text-slate-500 hover:text-rose-500">Limpar</button>
+                    </div>
+
+                    <div id="import-progress-box" class="hidden space-y-1.5 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800">
+                      <p id="import-progress-text" class="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 truncate">Preparando...</p>
+                      <div class="w-full h-2 bg-indigo-200 dark:bg-indigo-900 rounded-full overflow-hidden">
+                        <div id="import-progress-bar" class="h-full bg-indigo-600 transition-all" style="width:0%"></div>
+                      </div>
                     </div>
 
                     <div class="max-h-64 overflow-y-auto space-y-2 pr-1">
@@ -1729,7 +2100,7 @@ ${articlesText.slice(0, 12000)}`;
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
-                      <button id="btn-commit-import" onclick="App.commitImportedTrails(true)" class="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold">
+                      <button onclick="App.commitImportedTrails(true)" class="py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-extrabold">
                         ${hasGemini ? '✨ Gerar com Gemini AI' : '✨ Gerar (Auto / Offline)'}
                       </button>
                       <button onclick="App.commitImportedTrails(false)" class="py-2.5 px-3 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white text-xs font-extrabold">
@@ -1756,7 +2127,7 @@ ${articlesText.slice(0, 12000)}`;
                 <h2 class="text-lg font-black text-slate-900 dark:text-white">🎯 Caderno de Erros</h2>
                 <p class="text-xs text-slate-500 dark:text-slate-400">${items.length} questão(ões) para reforçar</p>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2">
                 <select onchange="ui.errorsFilterDisc=this.value; App.render();" class="px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold">
                   <option value="all">Todas as Disciplinas</option>
                   ${allDiscs.map(d => `<option value="${d.id}" ${ui.errorsFilterDisc === d.id ? 'selected' : ''}>${d.icon} ${escapeHtml(d.short)}</option>`).join('')}
@@ -1790,40 +2161,67 @@ ${articlesText.slice(0, 12000)}`;
       renderAjustesTab() {
         const savedGemini = localStorage.getItem(GEMINI_KEY_STORAGE) || '';
         const savedFb = localStorage.getItem(FB_CONFIG_KEY) || '';
+        const fbStatusLabel = CloudSync.source === 'code'
+          ? '✅ Ativo via DEFAULT_FIREBASE_CONFIG (no código)'
+          : CloudSync.source === 'localStorage'
+          ? '✅ Ativo via JSON salvo neste navegador'
+          : '📱 Não configurado (operando em Modo Local Offline)';
+
         return `
           <div class="space-y-5 animate-fade-in">
             <h2 class="text-lg font-black text-slate-900 dark:text-white">⚙️ Ajustes & Integrações</h2>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 responsive-grid-2">
-              <!-- API Gemini -->
+              <!-- Firebase Auth + Firestore -->
               <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-3">
-                <h3 class="text-sm font-extrabold">✨ API do Gemini (Questões VUNESP)</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Opcional. Salva apenas no seu navegador para gerar questões inéditas nos 3 formatos.</p>
-                <input id="input-gemini-key" type="password" value="${escapeHtml(savedGemini)}" placeholder="AIza..." class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono outline-none" />
-                <button onclick="localStorage.setItem('${GEMINI_KEY_STORAGE}', document.getElementById('input-gemini-key').value.trim()); showToast('✅ Chave Gemini salva!');" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">Salvar Chave</button>
+                <div class="flex items-center justify-between gap-2">
+                  <h3 class="text-sm font-extrabold">☁️ Firebase (Auth + Firestore)</h3>
+                  <button onclick="AuthUI.openModal()" class="px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[11px] font-extrabold">Abrir Conta</button>
+                </div>
+                <p class="text-xs font-semibold text-slate-600 dark:text-slate-300">${fbStatusLabel}</p>
+                ${CloudSync.user ? `<button onclick="CloudSync.pushAll(true)" class="w-full py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold">🔄 Sincronizar Agora</button>` : ''}
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">Override opcional via JSON (caso ainda não tenha colado as chaves no topo do <code>index.html</code>):</p>
+                <textarea id="input-fb-config" rows="3" placeholder='{"apiKey":"...","authDomain":"...","projectId":"..."}' class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-mono outline-none">${escapeHtml(savedFb)}</textarea>
+                <button onclick="App.saveFirebaseOverride()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">Salvar JSON & Conectar</button>
               </div>
 
-              <!-- Firebase Config -->
-              <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-3">
-                <h3 class="text-sm font-extrabold">☁️ Firebase Config (Auth + Firestore)</h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Cole o JSON do seu projeto Firebase para sincronizar trilhas, disciplinas e resultados na nuvem.</p>
-                <textarea id="input-fb-config" rows="3" placeholder='{"apiKey":"...","authDomain":"...","projectId":"..."}' class="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[11px] font-mono outline-none">${escapeHtml(savedFb)}</textarea>
-                <div class="flex gap-2">
-                  <button onclick="App.saveFirebaseConfig()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">Salvar & Conectar</button>
-                  <button onclick="AuthUI.openModal()" class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-xs font-bold">Abrir Login</button>
+              <!-- API Gemini & Meta Diária -->
+              <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-4">
+                <div class="space-y-2">
+                  <h3 class="text-sm font-extrabold">✨ API do Gemini (Questões VUNESP)</h3>
+                  <p class="text-xs text-slate-500 dark:text-slate-400">Opcional. Salva apenas no navegador (<code>decorei_tjsp_gemini_key</code>) para gerar questões via <code>gemini-2.5-flash</code>.</p>
+                  <input id="input-gemini-key" type="password" value="${escapeHtml(savedGemini)}" placeholder="AIza..." class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-mono outline-none" />
+                  <button onclick="localStorage.setItem('${GEMINI_KEY_STORAGE}', document.getElementById('input-gemini-key').value.trim()); showToast('✅ Chave Gemini salva!');" class="px-4 py-2 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">Salvar Chave Gemini</button>
+                </div>
+                <div class="pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                  <div>
+                    <h4 class="text-xs font-extrabold">🎯 Meta Diária de Questões</h4>
+                    <p class="text-[11px] text-slate-500">Atual: ${state.metaDiaria || 15} questões/dia</p>
+                  </div>
+                  <select onchange="state.metaDiaria=Number(this.value); saveState(); App.render();" class="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-bold">
+                    ${[10, 15, 20, 30, 50].map(n => `<option value="${n}" ${(state.metaDiaria || 15) === n ? 'selected' : ''}>${n}/dia</option>`).join('')}
+                  </select>
                 </div>
               </div>
 
-              <!-- Simulador SRS & Backup -->
+              <!-- Modo de Visualização, Simulador SRS & Backup -->
               <div class="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-4">
                 <div>
+                  <h3 class="text-sm font-extrabold mb-2">📱 Modo de Visualização</h3>
+                  <div class="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl text-xs font-bold">
+                    <button onclick="App.setViewMode('auto')" data-view-btn="auto" class="view-btn flex-1 py-1.5 rounded-lg">Auto</button>
+                    <button onclick="App.setViewMode('pc')" data-view-btn="pc" class="view-btn flex-1 py-1.5 rounded-lg">PC</button>
+                    <button onclick="App.setViewMode('mobile')" data-view-btn="mobile" class="view-btn flex-1 py-1.5 rounded-lg">Celular</button>
+                  </div>
+                </div>
+                <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
                   <h3 class="text-sm font-extrabold mb-1">🧪 Simulador de Data (SRS)</h3>
-                  <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Data atual do app: <strong>${getTodayStr()}</strong></p>
+                  <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Data atual no app: <strong>${getTodayStr()}</strong></p>
                   <div class="flex flex-wrap gap-2">
-                    <button onclick="App.simulateDays(1)" class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 text-xs font-extrabold">+1 dia</button>
-                    <button onclick="App.simulateDays(3)" class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 text-xs font-extrabold">+3 dias</button>
-                    <button onclick="App.simulateDays(7)" class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 text-xs font-extrabold">+7 dias</button>
-                    <button onclick="App.resetSimulatedDate()" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-xs font-bold">Hoje</button>
+                    <button onclick="App.simulateDays(1)" class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 text-xs font-extrabold">+1d</button>
+                    <button onclick="App.simulateDays(3)" class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 text-xs font-extrabold">+3d</button>
+                    <button onclick="App.simulateDays(7)" class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 text-xs font-extrabold">+7d</button>
+                    <button onclick="App.resetSimulatedDate()" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-xs font-bold">Reset (Hoje)</button>
                   </div>
                 </div>
                 <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
@@ -1842,7 +2240,9 @@ ${articlesText.slice(0, 12000)}`;
               <div class="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 rounded-2xl p-4 flex flex-col justify-between gap-3">
                 <div>
                   <h3 class="text-sm font-extrabold text-rose-700 dark:text-rose-400">⚠️ Zona de Perigo</h3>
-                  <p class="text-xs text-rose-600/90 dark:text-rose-300/80 mt-1">Elimina todas as trilhas, disciplinas personalizadas, Banco de Questões, SRS, XP e Caderno de Erros para começar do zero.</p>
+                  <p class="text-xs text-rose-600/90 dark:text-rose-300/80 mt-1 leading-relaxed">
+                    Elimina todas as trilhas (inclusive os exemplos iniciais), disciplinas personalizadas, Banco de Questões, SRS, XP, Streak e Caderno de Erros no <code>localStorage</code> e no Cloud Firestore.
+                  </p>
                 </div>
                 <button onclick="App.openWipeModal()" class="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-extrabold">
                   🗑️ Limpar Tudo (Começar do Zero)
@@ -1850,30 +2250,20 @@ ${articlesText.slice(0, 12000)}`;
               </div>
             </div>
           </div>`;
-      },
-
-      saveFirebaseConfig() {
-        const raw = document.getElementById('input-fb-config').value.trim();
-        if (!raw) {
-          localStorage.removeItem(FB_CONFIG_KEY);
-          showToast('Configuração Firebase removida.');
-          return;
-        }
-        try {
-          JSON.parse(raw);
-          localStorage.setItem(FB_CONFIG_KEY, raw);
-          showToast('✅ Firebase salvo! Recarregando conexão...');
-          setTimeout(() => location.reload(), 800);
-        } catch {
-          showToast('JSON inválido. Verifique as aspas duplas.');
-        }
       }
     };
 
     function updateHeaderBadges() {
       document.querySelectorAll('.stat-streak').forEach(el => el.textContent = `${state.stats.streak || 0}d`);
       document.querySelectorAll('.stat-xp').forEach(el => el.textContent = state.stats.xp || 0);
+
       const today = getTodayStr();
+      const todayCount = state.stats.todayDate === today ? (state.stats.todayCount || 0) : 0;
+      const goal = state.metaDiaria || 15;
+      const goalPct = Math.min(100, Math.round((todayCount / goal) * 100));
+      document.querySelectorAll('.stat-daily-goal').forEach(el => el.textContent = `${todayCount}/${goal}`);
+      document.querySelectorAll('.stat-daily-bar').forEach(el => el.style.width = `${goalPct}%`);
+
       const dueCount = state.questionBank.filter(q => state.srs[q.id] && state.srs[q.id].dueDate <= today).length;
       const errCount = Object.keys(state.errors).length;
 
@@ -1887,18 +2277,10 @@ ${articlesText.slice(0, 12000)}`;
       });
     }
 
-    // Expor controladores para os handlers inline do HTML
-    window.App = App;
-    window.Player = Player;
-    window.AuthUI = AuthUI;
-    window.DisciplineUI = DisciplineUI;
-    window.CloudSync = CloudSync;
-    window.ui = ui;
-    window.state = state;
-    window.saveState = saveState;
-    window.showToast = showToast;
-
-    App.init();
+    // Inicializa o aplicativo após o carregamento da página
+    window.addEventListener('DOMContentLoaded', () => {
+      App.init();
+    });
   </script>
 </body>
 </html>
