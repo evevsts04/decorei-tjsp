@@ -433,211 +433,85 @@
     // Dica: Ao preencher abaixo, o app conecta automaticamente no PC e no celular!
     const DEFAULT_FIREBASE_CONFIG = {
       apiKey: "COLE_SUA_API_KEY_AQUI",
-      authDomain: "COLE_SEU_AUTH_DOMAIN_AQUI",
-      projectId: "COLE_SEU_PROJECT_ID_AQUI",
-      storageBucket: "COLE_SEU_STORAGE_BUCKET_AQUI",
-      messagingSenderId: "COLE_SEU_MESSAGING_SENDER_ID_AQUI",
-      appId: "COLE_SEU_APP_ID_AQUI"
+      authDomain: "SEU_PROJETO.firebaseapp.com",
+      projectId: "SEU_PROJETO",
+      storageBucket: "SEU_PROJETO.firebasestorage.app",
+      messagingSenderId: "SEU_SENDER_ID",
+      appId: "SEU_APP_ID"
     };
 
     const STORAGE_KEY = 'decorei_tjsp_prod_state_v1';
     const FB_CONFIG_KEY = 'decorei_tjsp_firebase_config';
     const GEMINI_KEY_STORAGE = 'decorei_tjsp_gemini_key';
 
+    let auth = null;
+    let db = null;
+
     /**
      * Valida se o objeto firebaseConfig contém credenciais reais
-     * (não vazias e sem o texto placeholder "COLE_SU").
+     * verificando apenas apiKey, authDomain e projectId (> 5 chars e sem placeholders).
      */
     function isValidFirebaseConfig(cfg) {
       if (!cfg || typeof cfg !== 'object') return false;
       const req = ['apiKey', 'authDomain', 'projectId'];
+      const placeholders = ['COLE_', 'SEU_PROJETO', 'SUA_', '...'];
       return req.every(k => {
         const val = typeof cfg[k] === 'string' ? cfg[k].trim() : '';
-        return val.length > 5 && !val.toUpperCase().includes('COLE_SU');
+        if (val.length <= 5) return false;
+        const upper = val.toUpperCase();
+        return !placeholders.some(p => upper.includes(p));
       });
     }
 
-    // =========================================================================
-    // 1. CATÁLOGO OFICIAL DAS 15 LEGISLAÇÕES DO EDITAL TJSP
-    // =========================================================================
-    const DEFAULT_DISCIPLINES = [
-      { id: 'cp', name: 'Código Penal (Decreto-Lei nº 2.848/1940 — crimes contra a fé pública e contra a Administração Pública)', short: 'Código Penal', icon: '⚖️', color: 'rose', custom: false },
-      { id: 'cpp', name: 'Código de Processo Penal (Decreto-Lei nº 3.689/1941)', short: 'Processo Penal', icon: '🏛️', color: 'amber', custom: false },
-      { id: 'lei_9099_crim', name: 'Lei nº 9.099/1995 (Juizados Especiais Criminais)', short: 'JECrim (9.099/95)', icon: '⚖️', color: 'amber', custom: false },
-      { id: 'cpc', name: 'Código de Processo Civil (Lei nº 13.105/2015)', short: 'Processo Civil', icon: '📘', color: 'sky', custom: false },
-      { id: 'lei_9099_civ', name: 'Lei nº 9.099/1995 (Juizados Especiais Cíveis)', short: 'JEC (9.099/95)', icon: '📘', color: 'sky', custom: false },
-      { id: 'lei_12153', name: 'Lei nº 12.153/2009 (Juizados Especiais da Fazenda Pública)', short: 'JEFP (12.153/09)', icon: '🏛️', color: 'sky', custom: false },
-      { id: 'cf88', name: 'Constituição Federal de 1988 (recortes específicos, como direitos e garantias fundamentais, organização dos Poderes e Poder Judiciário)', short: 'Constituição Federal', icon: '📜', color: 'emerald', custom: false },
-      { id: 'lei_10261', name: 'Lei Estadual nº 10.261/1968 (Estatuto dos Funcionários Públicos Civis do Estado de São Paulo)', short: 'Estatuto SP (10.261)', icon: '🛡️', color: 'indigo', custom: false },
-      { id: 'lei_8429', name: 'Lei nº 8.429/1992 (Improbidade Administrativa)', short: 'Improbidade (8.429)', icon: '🛡️', color: 'indigo', custom: false },
-      { id: 'lei_13146', name: 'Lei nº 13.146/2015 (Estatuto da Pessoa com Deficiência)', short: 'Estatuto PCD (13.146)', icon: '♿', color: 'teal', custom: false },
-      { id: 'nscgj', name: 'Normas da Corregedoria Geral da Justiça (Tomo I)', short: 'NSCGJ (Tomo I)', icon: '📋', color: 'violet', custom: false },
-      { id: 'ritjsp', name: 'Regimento Interno do TJ-SP', short: 'Regimento TJ-SP', icon: '🏛️', color: 'violet', custom: false },
-      { id: 'lc_1111', name: 'Lei Complementar nº 1.111/2010 (plano de cargos e carreiras)', short: 'LC 1.111/2010', icon: '📌', color: 'indigo', custom: false },
-      { id: 'res_850', name: 'Resolução nº 850/2021 (teletrabalho)', short: 'Res. 850/2021', icon: '💻', color: 'teal', custom: false },
-      { id: 'res_963', name: 'Resolução nº 963/2025 (sistema eproc)', short: 'Res. 963/2025 (eproc)', icon: '💻', color: 'emerald', custom: false }
-    ];
-
-    const COLOR_STYLES = {
-      indigo:  { bg: 'bg-indigo-50 dark:bg-indigo-950/40', border: 'border-indigo-200 dark:border-indigo-800/70', bar: 'bg-indigo-600' },
-      emerald: { bg: 'bg-emerald-50 dark:bg-emerald-950/40', border: 'border-emerald-200 dark:border-emerald-800/70', bar: 'bg-emerald-600' },
-      rose:    { bg: 'bg-rose-50 dark:bg-rose-950/40', border: 'border-rose-200 dark:border-rose-800/70', bar: 'bg-rose-600' },
-      amber:   { bg: 'bg-amber-50 dark:bg-amber-950/40', border: 'border-amber-200 dark:border-amber-800/70', bar: 'bg-amber-500' },
-      sky:     { bg: 'bg-sky-50 dark:bg-sky-950/40', border: 'border-sky-200 dark:border-sky-800/70', bar: 'bg-sky-600' },
-      violet:  { bg: 'bg-violet-50 dark:bg-violet-950/40', border: 'border-violet-200 dark:border-violet-800/70', bar: 'bg-violet-600' },
-      teal:    { bg: 'bg-teal-50 dark:bg-teal-950/40', border: 'border-teal-200 dark:border-teal-800/70', bar: 'bg-teal-600' }
-    };
-
-    // =========================================================================
-    // 2. TRILHAS DE EXEMPLO INICIAIS (ELIMINADAS SE O USUÁRIO USAR "LIMPAR TUDO")
-    // =========================================================================
-    function createInitialExampleTrails() {
-      return [
-        {
-          id: 'ex_cp_peculato',
-          disciplineId: 'cp',
-          isExample: true,
-          origemIa: true,
-          breadcrumb: 'TÍTULO XI — DOS CRIMES CONTRA A ADMINISTRAÇÃO PÚBLICA › CAPÍTULO I',
-          title: 'Dos Crimes Praticados por Funcionário Público (Peculato e Concussão)',
-          subtitle: 'Art. 312 ao Art. 316 • 2 artigos essenciais',
-          readingMin: 5,
-          articles: [
-            {
-              numero: 'Art. 312',
-              rawText: 'Apropriar-se o funcionário público de dinheiro, valor ou qualquer outro bem móvel, público ou particular, de que tem a posse em razão do cargo, ou desviá-lo, em proveito próprio ou alheio:\nPena - reclusão, de dois a doze anos, e multa.\n§ 1º - Aplica-se a mesma pena, se o funcionário público, embora não tendo a posse do dinheiro, valor ou bem, o subtrai, ou concorre para que seja subtraído, em proveito próprio ou alheio, valendo-se de facilidade que lhe proporciona a qualidade de funcionário.\n§ 2º - Se o funcionário concorre culposamente para o crime de outrem:\nPena - detenção, de três meses a um ano.\n§ 3º - No caso do parágrafo anterior, a reparação do dano, se precede à sentença irrecorrível, extingue a punibilidade; se lhe é posterior, reduz de metade a pena imposta.',
-              textoHtml: '<mark class="hl-conceito">Apropriar-se</mark> o <mark class="hl-competencia">funcionário público</mark> de dinheiro, valor ou qualquer outro <mark class="hl-conceito">bem móvel</mark>, público ou particular, de que tem a posse em razão do cargo, ou <mark class="hl-conceito">desviá-lo</mark>, em proveito próprio ou alheio:\nPena - <mark class="hl-conceito">reclusão</mark>, de <mark class="hl-prazo">dois a doze anos</mark>, e multa.\n§ 1º - Aplica-se a mesma pena, se o <mark class="hl-competencia">funcionário público</mark>, <mark class="hl-excecao">embora não tendo a posse</mark> do dinheiro, valor ou bem, o <mark class="hl-conceito">subtrai</mark>, ou concorre para que seja subtraído, em proveito próprio ou alheio, valendo-se de facilidade que lhe proporciona a qualidade de funcionário.\n§ 2º - Se o <mark class="hl-competencia">funcionário</mark> concorre <mark class="hl-conceito">culposamente</mark> para o crime de outrem:\nPena - <mark class="hl-conceito">detenção</mark>, de <mark class="hl-prazo">três meses a um ano</mark>.\n§ 3º - No caso do <mark class="hl-conceito">parágrafo anterior</mark>, a reparação do dano, se <mark class="hl-excecao">precede à sentença irrecorrível</mark>, <mark class="hl-conceito">extingue a punibilidade</mark>; se lhe é <mark class="hl-excecao">posterior</mark>, reduz de <mark class="hl-prazo">metade</mark> a pena imposta.',
-              notaPegadinha: '⚠️ Pegadinha Vunesp: A reparação do dano só extingue a punibilidade no peculato CULPOSO (§ 2º) se preceder à sentença irrecorrível; se posterior, reduz de metade.'
-            },
-            {
-              numero: 'Art. 316',
-              rawText: 'Exigir, para si ou para outrem, direta ou indiretamente, ainda que fora da função ou antes de assumi-la, mas em razão dela, vantagem indevida:\nPena - reclusão, de 2 (dois) a 12 (doze) anos, e multa.',
-              textoHtml: '<mark class="hl-conceito">Exigir</mark>, para si ou para outrem, direta ou indiretamente, <mark class="hl-excecao">ainda que fora da função ou antes de assumi-la</mark>, mas em razão dela, <mark class="hl-conceito">vantagem indevida</mark>:\nPena - <mark class="hl-conceito">reclusão</mark>, de <mark class="hl-prazo">2 (dois) a 12 (doze) anos</mark>, e multa.',
-              notaPegadinha: '⚠️ Pegadinha Vunesp: Concussão usa o verbo EXIGIR (com reclusão de 2 a 12 anos). Não confunda com Corrupção Passiva (solicitar, receber ou aceitar promessa).'
-            }
-          ],
-          questions: [
-            {
-              id: 'ex_cp_q1',
-              tipo: 'true_false',
-              artigoRef: 'Art. 312, § 3º',
-              enunciado: 'No peculato culposo, a reparação do dano posterior à sentença irrecorrível extingue a punibilidade do agente.',
-              respostaCorreta: false,
-              textoLiteral: 'Art. 312, § 3º — A reparação do dano, se <mark>precede à sentença irrecorrível</mark>, extingue a punibilidade; se lhe é <mark>posterior</mark>, <mark>reduz de metade</mark> a pena imposta.',
-              dicaVunesp: 'Clássica da VUNESP: antes da sentença irrecorrível = extingue; depois = reduz de metade (e só vale para o peculato culposo).'
-            },
-            {
-              id: 'ex_cp_q2',
-              tipo: 'cloze',
-              artigoRef: 'Art. 316',
-              enunciado: 'Comete o crime de concussão o funcionário que _____, para si ou para outrem, direta ou indiretamente, vantagem indevida em razão da função.',
-              opcoes: ['exigir', 'solicitar', 'receber', 'aceitar'],
-              respostaCorreta: 'exigir',
-              textoLiteral: 'Art. 316 — <mark>Exigir</mark>, para si ou para outrem, direta ou indiretamente, ainda que fora da função ou antes de assumi-la, mas em razão dela, vantagem indevida.',
-              dicaVunesp: 'Concussão = EXIGIR. Corrupção passiva (Art. 317) = solicitar, receber ou aceitar promessa.'
-            },
-            {
-              id: 'ex_cp_q3',
-              tipo: 'multiple_choice',
-              artigoRef: 'Art. 312',
-              enunciado: 'Sobre o peculato (Art. 312 do CP), assinale a alternativa CORRETA:',
-              opcoes: [
-                'Incide somente sobre bens imóveis públicos.',
-                'A pena do peculato culposo é de detenção, de três meses a um ano.',
-                'Não se configura se o bem móvel for particular sob posse pública.',
-                'A pena do peculato doloso é de detenção, de dois a doze anos.'
-              ],
-              respostaCorreta: 1,
-              textoLiteral: 'Art. 312, § 2º — Se o funcionário concorre culposamente para o crime de outrem: Pena - <mark>detenção, de três meses a um ano</mark>.',
-              dicaVunesp: 'Peculato doloso = reclusão (2 a 12 anos); Peculato culposo = detenção (3 meses a 1 ano).'
-            }
-          ]
-        },
-        {
-          id: 'ex_10261_deveres',
-          disciplineId: 'lei_10261',
-          isExample: true,
-          origemIa: true,
-          breadcrumb: 'TÍTULO VI — DOS DEVERES, DAS PROIBIÇÕES E DAS RESPONSABILIDADES › CAPÍTULO I',
-          title: 'Dos Deveres e das Proibições do Funcionário Público',
-          subtitle: 'Art. 241 ao Art. 242 • 2 artigos essenciais',
-          readingMin: 5,
-          articles: [
-            {
-              numero: 'Art. 241',
-              rawText: 'São deveres do funcionário:\nI - ser assíduo e pontual;\nII - cumprir as ordens superiores, representando quando forem manifestamente ilegais;\nIII - desempenhar com zelo e presteza os trabalhos de que for incumbido;\nIV - guardar sigilo sobre os assuntos da repartição e, especialmente, sobre despachos, decisões ou providências;',
-              textoHtml: 'São <mark class="hl-conceito">deveres</mark> do <mark class="hl-competencia">funcionário</mark>:\nI - ser assíduo e pontual;\nII - cumprir as ordens superiores, <mark class="hl-excecao">representando quando forem manifestamente ilegais</mark>;\nIII - desempenhar com zelo e presteza os trabalhos de que for incumbido;\nIV - <mark class="hl-conceito">guardar sigilo</mark> sobre os assuntos da repartição e, especialmente, sobre despachos, decisões ou providências;',
-              notaPegadinha: '⚠️ Pegadinha Vunesp: A banca costuma trocar "manifestamente ilegais" por "inconvenientes" ou afirmar que o servidor deve recusar sem representar.'
-            },
-            {
-              numero: 'Art. 242',
-              rawText: 'Ao funcionário é proibido:\nI - (Revogado);\nII - retirar, sem prévia permissão da autoridade competente, qualquer documento ou objeto existente na repartição;\nIII - entreter-se, durante as horas de trabalho, em palestras, leituras ou outras atividades estranhas ao serviço;\nIV - deixar de comparecer ao serviço sem causa justificada;',
-              textoHtml: 'Ao <mark class="hl-competencia">funcionário</mark> é <mark class="hl-excecao">proibido</mark>:\nII - retirar, <mark class="hl-excecao">sem prévia permissão</mark> da <mark class="hl-competencia">autoridade competente</mark>, qualquer documento ou objeto existente na repartição;\nIII - entreter-se, durante as horas de trabalho, em palestras, leituras ou outras atividades estranhas ao serviço;\nIV - deixar de comparecer ao serviço <mark class="hl-excecao">sem causa justificada</mark>;',
-              notaPegadinha: '⚠️ Pegadinha Vunesp: Para retirar documento da repartição não basta "comunicar" ou "dar ciência" — exige-se PRÉVIA PERMISSÃO da autoridade competente.'
-            }
-          ],
-          questions: [
-            {
-              id: 'ex_10261_q1',
-              tipo: 'true_false',
-              artigoRef: 'Art. 241, II',
-              enunciado: 'É dever do funcionário público cumprir todas as ordens superiores, exceto representando quando forem manifestamente ilegais.',
-              respostaCorreta: true,
-              textoLiteral: 'Art. 241, II — cumprir as ordens superiores, <mark>representando quando forem manifestamente ilegais</mark>;',
-              dicaVunesp: 'A banca costuma trocar "manifestamente ilegais" por "inconvenientes" ou "inoportunas".'
-            },
-            {
-              id: 'ex_10261_q2',
-              tipo: 'cloze',
-              artigoRef: 'Art. 242, II',
-              enunciado: 'Ao funcionário é proibido retirar, sem prévia _____ da autoridade competente, qualquer documento ou objeto existente na repartição.',
-              opcoes: ['permissão', 'intimação', 'comunicação', 'ciência'],
-              respostaCorreta: 'permissão',
-              textoLiteral: 'Art. 242, II — retirar, sem <mark>prévia permissão</mark> da autoridade competente, qualquer documento ou objeto existente na repartição;',
-              dicaVunesp: 'Não basta "dar ciência" ou "comunicar": o Estatuto exige prévia PERMISSÃO.'
-            }
-          ]
-        }
-      ];
-    }
-
-    // =========================================================================
-    // 3. ESTADO GLOBAL & PERSISTÊNCIA LOCAL
-    // =========================================================================
-    function createEmptyState(exemplosRemovidos = false) {
-      const initialTrails = exemplosRemovidos ? [] : createInitialExampleTrails();
-      const initialBank = [];
-      initialTrails.forEach(t => {
-        (t.questions || []).forEach(q => initialBank.push({ ...q, disciplineId: t.disciplineId, trailId: t.id }));
-      });
-      return {
-        customDisciplines: [],
-        trails: initialTrails,
-        exemplosRemovidos,
-        progress: {},
-        srs: {},
-        questionBank: initialBank,
-        errors: {},
-        stats: { xp: 0, streak: 0, lastStudyDate: null, todayCount: 0, todayDate: null },
-        metaDiaria: 15,
-        prefs: { theme: 'light', viewMode: 'auto', fontSize: 15, showMarks: true, simOffsetDays: 0 }
-      };
-    }
-
-    function loadLocalState() {
+    /**
+     * Prioridade 1: Chaves inseridas diretamente em DEFAULT_FIREBASE_CONFIG no código.
+     * Prioridade 2: Fallback para JSON salvo na aba Ajustes (removendo lixo corrompido).
+     */
+    function getActiveFirebaseConfig() {
+      if (isValidFirebaseConfig(DEFAULT_FIREBASE_CONFIG)) {
+        return { config: DEFAULT_FIREBASE_CONFIG, source: 'code' };
+      }
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return createEmptyState(false);
-        const parsed = JSON.parse(raw);
-        const base = createEmptyState(Boolean(parsed.exemplosRemovidos));
-        return {
-          ...base,
-          ...parsed,
-          stats: { ...base.stats, ...(parsed.stats || {}) },
-          prefs: { ...base.prefs, ...(parsed.prefs || {}) }
-        };
+        const raw = localStorage.getItem(FB_CONFIG_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (isValidFirebaseConfig(parsed)) {
+            return { config: parsed, source: 'localStorage' };
+          }
+          // Remove configuração inválida ou incompleta para nunca bloquear o app
+          localStorage.removeItem(FB_CONFIG_KEY);
+        }
       } catch {
-        return createEmptyState(false);
+        localStorage.removeItem(FB_CONFIG_KEY);
+      }
+      return { config: null, source: 'none' };
+    }
+
+    /**
+     * Inicialização segura do Firebase Compat SDK v10.12.2 com persistência LOCAL.
+     */
+    function initFirebase() {
+      const { config, source } = getActiveFirebaseConfig();
+      CloudSync.source = source;
+      if (!config || typeof firebase === 'undefined') {
+        auth = null;
+        db = null;
+        return false;
+      }
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(config);
+        }
+        CloudSync.app = firebase.app();
+        auth = firebase.auth();
+        db = firebase.firestore();
+        CloudSync.auth = auth;
+        CloudSync.db = db;
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+        return true;
+      } catch (err) {
+        console.error('Erro ao inicializar Firebase:', err);
+        return false;
       }
     }
 
@@ -714,35 +588,19 @@
       debounceTimer: null,
 
       getActiveConfig() {
-        if (isValidFirebaseConfig(DEFAULT_FIREBASE_CONFIG)) {
-          this.source = 'code';
-          return DEFAULT_FIREBASE_CONFIG;
-        }
-        try {
-          const raw = localStorage.getItem(FB_CONFIG_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (isValidFirebaseConfig(parsed)) {
-              this.source = 'localStorage';
-              return parsed;
-            }
-          }
-        } catch {}
-        this.source = 'none';
-        return null;
+        const res = getActiveFirebaseConfig();
+        this.source = res.source;
+        return res.config;
       },
 
       init() {
-        const cfg = this.getActiveConfig();
-        if (!cfg || typeof firebase === 'undefined') {
+        const ready = initFirebase();
+        if (!ready || !this.auth) {
           this.syncState = 'local';
           this.updateIndicators();
           return;
         }
         try {
-          this.app = firebase.apps.length ? firebase.app() : firebase.initializeApp(cfg);
-          this.auth = firebase.auth();
-          this.db = firebase.firestore();
           this.auth.onAuthStateChanged(async (user) => {
             this.user = user;
             if (user) {
@@ -754,7 +612,7 @@
             App.render();
           });
         } catch (err) {
-          console.error('Erro ao inicializar Firebase:', err);
+          console.error('Erro no listener de autenticação Firebase:', err);
           this.syncState = 'error';
           this.updateIndicators();
         }
@@ -927,6 +785,7 @@
           'auth/weak-password': 'A senha deve ter pelo menos 6 caracteres.',
           'auth/too-many-requests': 'Muitas tentativas seguidas. Aguarde alguns instantes.',
           'auth/network-request-failed': 'Sem conexão com a internet no momento.',
+          'auth/popup-blocked': 'O navegador bloqueou a janela pop-up do Google. Libere pop-ups para este site ou use E-mail e Senha.',
           'auth/popup-closed-by-user': 'A janela de login com Google foi fechada antes de concluir.',
           'auth/unauthorized-domain': `Domínio não autorizado (${host}). No Firebase Console, acesse Authentication > Settings > Authorized domains e adicione "${host}".`
         };
@@ -1265,7 +1124,7 @@
           breadcrumb,
           title,
           subtitle,
-          readingMin: articles.length <= 6 ? 5 : 10,
+          readingMin: articles.length <= 4 ? 5 : 10,
           selected: true,
           articles: articles.map(a => ({
             numero: a.numero,
@@ -2359,9 +2218,14 @@ ${JSON.stringify(pureArticles)}`;
 
                 <div>
                   <label class="block text-xs font-extrabold text-slate-700 dark:text-slate-200 mb-1.5">2. Enviar arquivo .docx</label>
-                  <label class="flex flex-col items-center justify-center p-5 border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition">
+                  <label
+                    ondragover="event.preventDefault(); this.classList.add('border-indigo-500','bg-indigo-100/60','dark:bg-indigo-900/40');"
+                    ondragleave="this.classList.remove('border-indigo-500','bg-indigo-100/60','dark:bg-indigo-900/40');"
+                    ondrop="event.preventDefault(); this.classList.remove('border-indigo-500','bg-indigo-100/60','dark:bg-indigo-900/40'); if(event.dataTransfer.files[0]) App.handleDocxUpload(event.dataTransfer.files[0]);"
+                    class="flex flex-col items-center justify-center p-5 border-2 border-dashed border-indigo-300 dark:border-indigo-700 rounded-2xl bg-indigo-50/40 dark:bg-indigo-950/20 cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition"
+                  >
                     <span class="text-2xl mb-1">📄</span>
-                    <span class="text-xs font-extrabold text-indigo-700 dark:text-indigo-300">Clique para selecionar .docx</span>
+                    <span class="text-xs font-extrabold text-indigo-700 dark:text-indigo-300">Arraste o .docx aqui ou clique para selecionar</span>
                     <span class="text-[10px] text-slate-500 mt-0.5">Leitura 100% local via mammoth.js</span>
                     <input type="file" accept=".docx" class="hidden" onchange="App.handleDocxUpload(this.files[0])" />
                   </label>
