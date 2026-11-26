@@ -1059,6 +1059,511 @@ ${articlesText}`;
     };
 
     // =========================================================================
+    // 8. PARSER HIERÁRQUICO DE LEI SECA (REGEX + DIVISÃO EM ATÉ 6 ARTIGOS)
+    // =========================================================================
+    const LawParser = {
+      parse(rawText, disciplineId, splitSix = true) {
+        const lines = String(rawText || '')
+          .replace(/\r\n/g, '\n')
+          .replace(/\r/g, '\n')
+          .split('\n')
+          .map((l) => l.trim())
+          .filter((l) => l.length > 0);
+
+        const headerRx = /^(LIVRO|T[ÍI]TULO|CAP[ÍI]TULO|SE[ÇC][ÃA]O|SUBSE[ÇC][ÃA]O)\b\s*(.*)$/i;
+        const artRx = /^Art\.?\s*(\d+(?:\.\d+)?(?:[º°oª])?(?:\s*-\s*[A-Z])?)\.?\s*(.*)$/i;
+
+        const hierarchy = { livro: '', titulo: '', capitulo: '', secao: '', subsecao: '' };
+        const groups = [];
+        let currentGroup = null;
+        let currentArticle = null;
+        let pendingHeaderKey = null;
+
+        const buildBreadcrumb = () => {
+          const parts = [hierarchy.livro, hierarchy.titulo, hierarchy.capitulo, hierarchy.secao, hierarchy.subsecao].filter(Boolean);
+          return parts.length ? parts.join(' › ') : 'DISPOSIÇÕES GERAIS';
+        };
+
+        const buildGroupTitle = () => {
+          return hierarchy.subsecao || hierarchy.secao || hierarchy.capitulo || hierarchy.titulo || hierarchy.livro || 'Disposições Gerais';
+        };
+
+        const flushArticle = () => {
+          if (!currentArticle) return;
+          if (!currentGroup) {
+            currentGroup = { breadcrumb: buildBreadcrumb(), title: buildGroupTitle(), articles: [] };
+            groups.push(currentGroup);
+          }
+          currentArticle.rawText = currentArticle.lines.join('\n').trim();
+          currentArticle.textoHtml = VunespEngine.applyOfflineMarks(currentArticle.rawText);
+          delete currentArticle.lines;
+          currentGroup.articles.push(currentArticle);
+          currentArticle = null;
+        };
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+
+          // 1. Início de Artigo
+          const am = line.match(artRx);
+          if (am) {
+            pendingHeaderKey = null;
+            flushArticle();
+            if (!currentGroup) {
+              currentGroup = { breadcrumb: buildBreadcrumb(), title: buildGroupTitle(), articles: [] };
+              groups.push(currentGroup);
+            }
+            currentArticle = {
+              numero: `Art. ${am[1].replace(/\s+/g, '')}`,
+              lines: [line],
+              notaPegadinha: ''
+            };
+            continue;
+          }
+
+          // 2. Cabeçalho estrutural (LIVRO, TÍTULO, CAPÍTULO, SEÇÃO, SUBSEÇÃO)
+          const hm = line.match(headerRx);
+          if (hm) {
+            flushArticle();
+            const type = hm[1].toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const fullHeader = line.replace(/\s+/g, ' ').trim();
+            if (type === 'LIVRO') {
+              hierarchy.livro = fullHeader;
+              hierarchy.titulo = hierarchy.capitulo = hierarchy.secao = hierarchy.subsecao = '';
+              pendingHeaderKey = 'livro';
+            } else if (type === 'TITULO') {
+              hierarchy.titulo = fullHeader;
+              hierarchy.capitulo = hierarchy.secao = hierarchy.subsecao = '';
+              pendingHeaderKey = 'titulo';
+            } else if (type === 'CAPITULO') {
+              hierarchy.capitulo = fullHeader;
+              hierarchy.secao = hierarchy.subsecao = '';
+              pendingHeaderKey = 'capitulo';
+            } else if (type === 'SECAO') {
+              hierarchy.secao = fullHeader;
+              hierarchy.subsecao = '';
+              pendingHeaderKey = 'secao';
+            } else if (type === 'SUBSECAO') {
+              hierarchy.subsecao = fullHeader;
+              pendingHeaderKey = 'subsecao';
+            }
+            currentGroup = { breadcrumb: buildBreadcrumb(), title: buildGroupTitle(), articles: [] };
+            groups.push(currentGroup);
+            continue;
+          }
+
+          // 3. Linha descritiva imediatamente após um cabeçalho estrutural
+          if (pendingHeaderKey && !currentArticle && line.length <= 140 && !/^(§|Parágrafo|I\s*-|II\s*-|a\))/i.test(line)) {
+            hierarchy[pendingHeaderKey] = `${hierarchy[pendingHeaderKey]} — ${line}`;
+            if (currentGroup) {
+              currentGroup.breadcrumb = buildBreadcrumb();
+              currentGroup.title = buildGroupTitle();
+            }
+            pendingHeaderKey = null;
+            continue;
+          }
+
+          // 4. Continuação do artigo corrente (parágrafos, incisos, alíneas, penas)
+          if (currentArticle) {
+            currentArticle.lines.push(line);
+          }
+        }
+        flushArticle();
+
+        const validGroups = groups.filter((g) => g.articles.length > 0);
+        const existingCount = (state.trails || []).filter((t) => t.disciplineId === disciplineId).length;
+        const trails = [];
+        let totalArticles = 0;
+
+        validGroups.forEach((g) => {
+          totalArticles += g.articles.length;
+          const maxPerTrail = splitSix ? 6 : g.articles.length;
+          const totalParts = Math.ceil(g.articles.length / maxPerTrail);
+
+          for (let p = 0; p < totalParts; p++) {
+            const chunk = g.articles.slice(p * maxPerTrail, (p + 1) * maxPerTrail);
+            const firstArt = chunk[0].numero;
+            const lastArt = chunk[chunk.length - 1].numero;
+            const rangeLabel = chunk.length === 1 ? firstArt : `${firstArt} ao ${lastArt}`;
+            const partSuffix = totalParts > 1 ? ` (Parte ${p + 1}/${totalParts})` : '';
+
+            trails.push({
+              id: uid(`tr_${disciplineId}`),
+              disciplineId,
+              order: existingCount + trails.length + 1,
+              breadcrumb: g.breadcrumb,
+              title: `${g.title}${partSuffix}`,
+              subtitle: `${rangeLabel} • ${chunk.length} artigo${chunk.length === 1 ? '' : 's'}`,
+              readingMin: chunk.length <= 4 ? 5 : 10,
+              origemIa: false,
+              selected: true,
+              articles: chunk,
+              questions: []
+            });
+          }
+        });
+
+        const mappedArticles = trails.reduce((sum, t) => sum + t.articles.length, 0);
+        return { totalArticles, mappedArticles, trails };
+      }
+    };
+
+    // =========================================================================
+    // 9. MOTOR DE REVISÃO ESPAÇADA (SRS PONDERADO POR ALTA INCIDÊNCIA VUNESP)
+    // =========================================================================
+    const SRSEngine = {
+      getIntervals(isHigh) {
+        if (isHigh && state.settings.prioritizeHighIncidence) {
+          return { hard: 1, good: 2, easy: 4, max: 14 };
+        }
+        return { hard: 1, good: 3, easy: 7, max: 60 };
+      },
+
+      enqueueTrail(trail) {
+        if (!trail || !Array.isArray(trail.questions)) return;
+        const tomorrow = todayISO(1);
+        trail.questions.forEach((q) => {
+          if (!state.srs[q.id]) {
+            state.srs[q.id] = { due: tomorrow, interval: 1, ease: 2.5, reps: 0 };
+          }
+        });
+      },
+
+      schedule(questionId, rating, disciplineId = '', artigoRef = '') {
+        const isHigh = isHighIncidenceArticle(disciplineId, artigoRef);
+        const iv = this.getIntervals(isHigh);
+        const cur = state.srs[questionId] || { due: todayISO(0), interval: 0, ease: 2.5, reps: 0 };
+
+        let nextDays = 0;
+        let reps = cur.reps || 0;
+        let ease = cur.ease || 2.5;
+
+        if (rating === 'again') {
+          nextDays = 0;
+          reps = 0;
+          ease = Math.max(1.3, ease - 0.2);
+        } else if (rating === 'hard') {
+          nextDays = Math.min(iv.max, Math.max(iv.hard, Math.round((cur.interval || iv.hard) * 1.2)));
+          reps++;
+          ease = Math.max(1.3, ease - 0.1);
+        } else if (rating === 'good') {
+          nextDays = reps === 0 ? iv.good : Math.min(iv.max, Math.max(iv.good, Math.round((cur.interval || iv.good) * ease)));
+          reps++;
+        } else {
+          nextDays = reps === 0 ? iv.easy : Math.min(iv.max, Math.max(iv.easy, Math.round((cur.interval || iv.easy) * ease * 1.3)));
+          reps++;
+          ease = Math.min(3.0, ease + 0.1);
+        }
+
+        state.srs[questionId] = {
+          due: todayISO(nextDays),
+          interval: nextDays,
+          ease: Number(ease.toFixed(2)),
+          reps
+        };
+        persistState(true);
+      },
+
+      getDueQuestions(onlyHigh = false) {
+        const today = todayISO(0);
+        const due = questionBankCache.filter((q) => {
+          const rec = state.srs[q.id];
+          if (!rec || rec.due > today) return false;
+          if (onlyHigh && !isHighIncidenceQuestion(q)) return false;
+          return true;
+        });
+
+        if (state.settings.prioritizeHighIncidence) {
+          due.sort((a, b) => {
+            const hiDiff = (isHighIncidenceQuestion(b) ? 1 : 0) - (isHighIncidenceQuestion(a) ? 1 : 0);
+            if (hiDiff !== 0) return hiDiff;
+            return (state.srs[a.id]?.due || '').localeCompare(state.srs[b.id]?.due || '');
+          });
+        }
+        return due;
+      }
+    };
+
+    // =========================================================================
+    // 10. PLAYER DE ESTUDO (FASE 1 LEITURA ATIVA + FASE 2 QUIZ / SRS / ERROS)
+    // =========================================================================
+    const Player = {
+      mode: 'read',
+      trail: null,
+      questions: [],
+      qIndex: 0,
+      hits: 0,
+      answered: false,
+      title: '',
+      timerSec: 300,
+      timerRunning: false,
+      timerHandle: null,
+
+      openTrailRead(trailId) {
+        const t = state.trails.find((x) => x.id === trailId);
+        if (!t) return;
+        this.stopTimer();
+        this.mode = 'read';
+        this.trail = t;
+        this.title = t.title;
+        this.timerSec = (t.readingMin || 5) * 60;
+        this.timerRunning = false;
+        document.getElementById('player-overlay').classList.remove('hidden');
+        this.renderRead();
+      },
+
+      openTrailQuiz(trailId) {
+        const t = state.trails.find((x) => x.id === trailId);
+        if (!t) return;
+        if (!t.questions || !t.questions.length) {
+          t.questions = VunespEngine.generateOfflineQuestions(t);
+          persistState(true);
+        }
+        if (!t.questions.length) {
+          showToast('Não foi possível gerar questões para esta trilha.', 'warn');
+          return;
+        }
+        this.stopTimer();
+        this.mode = 'trail_quiz';
+        this.trail = t;
+        this.title = `Quiz — ${t.title}`;
+        this.questions = t.questions.map((q) => ({ ...q, trailId: t.id, disciplineId: t.disciplineId }));
+        this.qIndex = 0;
+        this.hits = 0;
+        this.answered = false;
+        document.getElementById('player-overlay').classList.remove('hidden');
+        this.renderQuestion();
+      },
+
+      openQueue(mode, list, title) {
+        if (!list || !list.length) {
+          showToast('Nenhuma questão disponível nesta fila.', 'warn');
+          return;
+        }
+        this.stopTimer();
+        this.mode = mode;
+        this.trail = null;
+        this.title = title;
+        this.questions = list;
+        this.qIndex = 0;
+        this.hits = 0;
+        this.answered = false;
+        document.getElementById('player-overlay').classList.remove('hidden');
+        this.renderQuestion();
+      },
+
+      close() {
+        this.stopTimer();
+        document.getElementById('player-overlay').classList.add('hidden');
+        App.render();
+      },
+
+      stopTimer() {
+        if (this.timerHandle) clearInterval(this.timerHandle);
+        this.timerHandle = null;
+        this.timerRunning = false;
+      },
+
+      toggleTimer() {
+        if (this.timerRunning) {
+          this.stopTimer();
+        } else {
+          this.timerRunning = true;
+          this.timerHandle = setInterval(() => {
+            if (this.timerSec > 0) this.timerSec--;
+            else {
+              this.stopTimer();
+              showToast('⏱️ Tempo de leitura encerrado! Hora do Quiz.', 'info');
+            }
+            this.updateTimerUI();
+          }, 1000);
+        }
+        this.updateTimerUI();
+      },
+
+      formatTime(sec) {
+        const m = String(Math.floor(sec / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        return `${m}:${s}`;
+      },
+
+      updateTimerUI() {
+        const btn = document.getElementById('read-timer-btn');
+        if (btn) btn.textContent = `${this.timerRunning ? '⏸️' : '▶️'} ${this.formatTime(this.timerSec)}`;
+      },
+
+      toggleMarks() {
+        state.settings.showMarks = !state.settings.showMarks;
+        persistState(true);
+        if (this.mode === 'read') this.renderRead();
+      },
+
+      changeFontSize(delta) {
+        state.settings.fontSize = Math.min(24, Math.max(13, (state.settings.fontSize || 16) + delta));
+        persistState(true);
+        if (this.mode === 'read') this.renderRead();
+      },
+
+      formatArticleLines(htmlText) {
+        return String(htmlText || '')
+          .split('\n')
+          .map((line) => line.trim())
+          .filter(Boolean)
+          .map((line) => {
+            const plain = line.replace(/<[^>]+>/g, '').trim();
+            if (/^([a-z]\)|[a-z]\s*-)/i.test(plain)) {
+              return `<p class="pl-8 mb-1.5">${line}</p>`;
+            }
+            if (/^(M{0,3}(?:CM|CD|D?C{0,3})(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3}))\s*[-–—]/i.test(plain) && /^[IVXLCDM]+\s*[-–—]/.test(plain)) {
+              return `<p class="pl-5 mb-1.5">${line}</p>`;
+            }
+            if (/^(§|Par[áa]grafo\s+[úu]nico)/i.test(plain)) {
+              return `<p class="pl-3 mb-2">${line}</p>`;
+            }
+            return `<p class="mb-2">${line}</p>`;
+          })
+          .join('');
+      },
+
+      renderRead() {
+        const t = this.trail;
+        if (!t) return;
+        const d = getDiscipline(t.disciplineId);
+        const hideMarksCls = state.settings.showMarks ? '' : 'hide-marks';
+        const fontSize = state.settings.fontSize || 16;
+
+        document.getElementById('player-header-info').innerHTML = `
+          <p class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate">${escHtml(d.short)} • ${escHtml(t.breadcrumb || '')}</p>
+          <h2 class="font-black text-sm sm:text-base truncate">Fase 1: ${escHtml(t.title)}</h2>
+        `;
+
+        document.getElementById('player-body').innerHTML = `
+          <div class="max-w-3xl mx-auto space-y-4 animate-fade-in ${hideMarksCls}">
+            <!-- Barra de controles da leitura -->
+            <div class="sticky top-0 z-10 bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-slate-200 dark:border-slate-800 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-2 shadow-sm">
+              <div class="flex flex-wrap items-center gap-1.5">
+                <button id="read-timer-btn" onclick="Player.toggleTimer()" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-black">${this.timerRunning ? '⏸️' : '▶️'} ${this.formatTime(this.timerSec)}</button>
+                <button onclick="Player.toggleMarks()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold ${state.settings.showMarks ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">🖍️ Pegadinhas VUNESP</button>
+                <button onclick="Player.changeFontSize(-1)" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-black">A-</button>
+                <button onclick="Player.changeFontSize(1)" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-black">A+</button>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="App.promptUpgradeAI('${t.id}', false)" class="px-3 py-1.5 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-xs font-extrabold">✨ Upgrade IA</button>
+                <button onclick="App.promptUpgradeAI('${t.id}', true)" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-extrabold">+ Exercícios</button>
+              </div>
+            </div>
+
+            <!-- Legenda cirúrgica 4 cores -->
+            <div class="vunesp-legend bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 flex flex-wrap items-center gap-2 text-[11px] font-bold">
+              <span class="text-slate-400 font-extrabold mr-1">Radar VUNESP:</span>
+              <span class="px-2 py-0.5 rounded bg-rose-200/80 text-rose-900 dark:bg-rose-900/50 dark:text-rose-200">Exceção / Restrição</span>
+              <span class="px-2 py-0.5 rounded bg-yellow-200/80 text-yellow-900 dark:bg-yellow-900/50 dark:text-yellow-200">Prazo / Número / Quórum</span>
+              <span class="px-2 py-0.5 rounded bg-blue-200/80 text-blue-900 dark:bg-blue-900/50 dark:text-blue-200">Competência / Sujeito</span>
+              <span class="px-2 py-0.5 rounded bg-purple-200/80 text-purple-900 dark:bg-purple-900/50 dark:text-purple-200">Conceito / Nuclear</span>
+            </div>
+
+            <!-- Cartões dos Artigos -->
+            <div class="space-y-4">
+              ${(t.articles || []).map((art) => {
+                const isHigh = isHighIncidenceArticle(t.disciplineId, art.numero);
+                return `
+                  <article class="bg-white dark:bg-slate-900 rounded-3xl border ${isHigh ? 'border-orange-300 dark:border-orange-800/80' : 'border-slate-200 dark:border-slate-800'} p-5 shadow-sm space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <span class="px-3 py-1 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 text-xs font-black">${escHtml(art.numero)}</span>
+                      ${isHigh ? '<span class="px-2.5 py-1 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 text-[10px] font-black">🔥 Alta Incidência VUNESP</span>' : ''}
+                    </div>
+                    <div class="law-text leading-relaxed text-slate-800 dark:text-slate-200" style="font-size:${fontSize}px">
+                      ${this.formatArticleLines(art.textoHtml || VunespEngine.applyOfflineMarks(art.rawText))}
+                    </div>
+                    ${art.notaPegadinha ? `<div class="pegadinha-note p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs font-semibold text-amber-900 dark:text-amber-200">${escHtml(art.notaPegadinha)}</div>` : ''}
+                  </article>
+                `;
+              }).join('')}
+            </div>
+
+            <button onclick="Player.openTrailQuiz('${t.id}')" class="w-full py-4 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm shadow-lg transition">
+              🎯 Ir para Fase 2: Quiz VUNESP (${(t.questions || []).length} questões) →
+            </button>
+          </div>
+        `;
+      },
+
+      renderQuestion() {
+        if (this.qIndex >= this.questions.length) {
+          this.renderSummary();
+          return;
+        }
+        this.answered = false;
+        const q = this.questions[this.qIndex];
+        const total = this.questions.length;
+        const pct = Math.round((this.qIndex / total) * 100);
+        const d = getDiscipline(q.disciplineId);
+        const isHigh = isHighIncidenceQuestion(q);
+        const tipoLabel = q.tipo === 'cloze' ? '🧩 Preenchimento de Lacuna' : q.tipo === 'true_false' ? '⚖️ Certo ou Errado' : '📝 Múltipla Escolha';
+
+        document.getElementById('player-header-info').innerHTML = `
+          <p class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate">${escHtml(this.title)}</p>
+          <h2 class="font-black text-sm truncate">Questão ${this.qIndex + 1} de ${total} • Acertos: ${this.hits}</h2>
+        `;
+
+        const enunciadoHtml = escHtml(q.enunciado).replace(/_{3,}/g, '<span class="inline-block px-2.5 py-0.5 mx-1 rounded-lg bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-black border-b-2 border-indigo-500">_____</span>');
+
+        let optionsHtml = '';
+        if (q.tipo === 'true_false') {
+          optionsHtml = `
+            <div class="grid grid-cols-2 gap-3">
+              <button onclick="Player.answer(true)" class="q-opt py-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-500 bg-white dark:bg-slate-900 font-black text-sm transition">✅ CERTO</button>
+              <button onclick="Player.answer(false)" class="q-opt py-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-rose-500 bg-white dark:bg-slate-900 font-black text-sm transition">❌ ERRADO</button>
+            </div>
+          `;
+        } else if (q.tipo === 'cloze') {
+          optionsHtml = `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              ${(q.opcoes || []).map((opt, idx) => `
+                <button onclick="Player.answer(Player.questions[Player.qIndex].opcoes[${idx}])" class="q-opt text-left p-3.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 bg-white dark:bg-slate-900 text-xs sm:text-sm font-extrabold transition">
+                  <span class="inline-flex w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 items-center justify-center mr-2 text-[11px] font-black">${String.fromCharCode(65 + idx)}</span>
+                  ${escHtml(opt)}
+                </button>
+              `).join('')}
+            </div>
+          `;
+        } else {
+          optionsHtml = `
+            <div class="space-y-2.5">
+              ${(q.opcoes || []).map((opt, idx) => `
+                <button onclick="Player.answer(${idx})" class="q-opt w-full text-left p-3.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 bg-white dark:bg-slate-900 text-xs sm:text-sm font-bold transition flex items-start gap-2.5">
+                  <span class="inline-flex w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 items-center justify-center shrink-0 text-[11px] font-black">${String.fromCharCode(65 + idx)}</span>
+                  <span>${escHtml(opt)}</span>
+                </button>
+              `).join('')}
+            </div>
+          `;
+        }
+
+        document.getElementById('player-body').innerHTML = `
+          <div class="max-w-2xl mx-auto space-y-4 animate-fade-in">
+            <div class="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div class="h-full bg-indigo-600 transition-all" style="width:${pct}%"></div>
+            </div>
+
+            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-5 sm:p-6 shadow-sm space-y-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-[11px] font-extrabold">${escHtml(d.short)} • ${escHtml(q.artigoRef || '')}</span>
+                  ${isHigh ? '<span class="px-2.5 py-1 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 text-[10px] font-black">🔥 Alta Incidência VUNESP</span>' : ''}
+                </div>
+                <span class="text-[11px] font-extrabold text-indigo-600 dark:text-indigo-400">${tipoLabel}</span>
+              </div>
+
+              <p class="text-sm sm:text-base font-bold leading-relaxed">${enunciadoHtml}</p>
+              ${optionsHtml}
+            </div>
+
+            <div id="q-feedback"></div>
+          </div>
+        `;
+      },
+
       findFullArticle(q) {
         if (!q) return null;
         const targetNum = normalizeArticleNum(q.artigoRef);
