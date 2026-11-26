@@ -170,12 +170,12 @@
     // 1. COLE SUAS CHAVES DO FIREBASE AQUI (PRIORIDADE SOBRE O LOCALSTORAGE)
     // =========================================================================
     const DEFAULT_FIREBASE_CONFIG = {
-      apiKey: "AIzaSyCSA6c0WG_Cm3ZY_b_zdS_8Q0mhVVS6mUk",
-      authDomain: "decoreitjsp.firebaseapp.com",
-      projectId: "decoreitjsp",
-      storageBucket: "decoreitjsp.firebasestorage.app",
-      messagingSenderId: "488268513679",
-      appId: "1:488268513679:web:d8f564b366b59329b88bfa"
+      apiKey: "AIzaSyBx31Et1ChcPYPoXHTxPRQTUg-gXL2wvic",
+      authDomain: "studyai-bcaad.firebaseapp.com",
+      projectId: "studyai-bcaad",
+      storageBucket: "studyai-bcaad.firebasestorage.app",
+      messagingSenderId: "951771157217",
+      appId: "1:951771157217:web:f573534bbc93918f91dda0"
     };
 
     // =========================================================================
@@ -882,83 +882,112 @@
       generateOfflineQuestions(trail) {
         const qs = [];
         const existingPrompts = new Set((trail.questions || []).map((q) => q.enunciado.toLowerCase()));
-        const swapPairs = [
-          ['vedado', 'permitido'], ['vedada', 'permitida'], ['proibido', 'autorizado'],
-          ['obrigatório', 'facultativo'], ['obrigatória', 'facultativa'],
-          ['reclusão', 'detenção'], ['dias úteis', 'dias corridos'],
-          ['salvo', 'inclusive'], ['exceto', 'inclusive']
+
+        // Padrões cirúrgicos para preenchimento de lacunas (cloze) no estilo VUNESP
+        const clozeRules = [
+          {
+            rx: /\b(\d+\s*(?:dias?\s*úteis|dias?\s*corridos|dias?|horas?|meses|anos?|salários?-mínimos?|%|por cento))\b/i,
+            getDistractors: (ans) => {
+              const lower = ans.toLowerCase();
+              if (lower.includes('hora')) return ['12 horas', '24 horas', '48 horas', '72 horas', '6 horas'];
+              if (lower.includes('mês') || lower.includes('mes')) return ['1 mês', '2 meses', '3 meses', '6 meses', '12 meses'];
+              if (lower.includes('ano')) return ['1 ano', '2 anos', '3 anos', '5 anos', '8 anos', '10 anos'];
+              if (lower.includes('salário')) return ['20 salários-mínimos', '30 salários-mínimos', '40 salários-mínimos', '60 salários-mínimos'];
+              if (lower.includes('%') || lower.includes('por cento')) return ['10%', '25%', '50%', '70%', '90%'];
+              if (lower.includes('úteis')) return ['3 dias úteis', '5 dias úteis', '10 dias úteis', '15 dias úteis', '30 dias úteis'];
+              if (lower.includes('corridos')) return ['5 dias corridos', '10 dias corridos', '15 dias corridos', '30 dias corridos'];
+              return ['2 dias', '3 dias', '5 dias', '10 dias', '15 dias', '30 dias', '60 dias', '90 dias'];
+            },
+            tip: 'Atenção aos prazos, números e percentuais exatos previstos na lei seca.'
+          },
+          {
+            rx: /\b(vedado|vedada|proibido|proibida|salvo|exceto|somente|apenas|obrigatório|obrigatória|facultativo|facultativa|independentemente|ressalvado|ressalvada|nunca|jamais)\b/i,
+            getDistractors: () => ['vedado', 'permitido', 'obrigatório', 'facultativo', 'salvo', 'inclusive', 'exceto', 'somente', 'independentemente', 'sempre'],
+            tip: 'A VUNESP costuma trocar termos restritivos e exceções (ex.: vedado/permitido, salvo/inclusive).'
+          },
+          {
+            rx: /\b(reclusão|detenção|indulgência|dolo|dolosa|doloso|culpa|culposa|culposo|impedimento|suspeição|prescrição|decadência|inafiançável|imprescritível|segredo de justiça|ampla defesa|contraditório|de ofício|maioria absoluta|maioria simples|dois terços|três quintos)\b/i,
+            getDistractors: () => ['reclusão', 'detenção', 'dolo', 'culpa', 'impedimento', 'suspeição', 'prescrição', 'decadência', 'maioria absoluta', 'maioria simples', 'de ofício', 'indulgência'],
+            tip: 'Conceito nuclear frequentemente cobrado na literalidade pela banca VUNESP.'
+          },
+          {
+            rx: /\b(Juiz(?:\s+de\s+Direito|\s+Corregedor\s+Permanente)?|Escriv[ãa]o|Chefe de Secretaria|Oficial de Justiça|Corregedor Geral(?: da Justiça)?|funcionário público|Ministério Público|Tribunal de Justiça|Órgão Especial|Conselho Superior da Magistratura|autoridade competente)\b/i,
+            getDistractors: () => ['Juiz de Direito', 'Escrivão', 'Oficial de Justiça', 'Corregedor Geral da Justiça', 'Ministério Público', 'Órgão Especial', 'Conselho Superior da Magistratura', 'autoridade competente'],
+            tip: 'Confira exatamente quem detém a competência ou legitimidade no dispositivo.'
+          }
         ];
 
-        (trail.articles || []).forEach((art, idx) => {
-          const clean = (art.rawText || '').replace(/\s+/g, ' ').trim();
-          if (clean.length < 25) return;
-          const snippet = clean.length > 260 ? clean.slice(0, 260).replace(/\s+\S*$/, '') + '...' : clean;
+        const makeCloze = (art, segment, ans, distractorsPool, tip) => {
+          const escapedAns = ans.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const clozePrompt = segment.replace(new RegExp(`\\b${escapedAns}\\b`, 'i'), '_____');
+          if (!clozePrompt.includes('_____') || existingPrompts.has(clozePrompt.toLowerCase())) return null;
 
-          // 1) Cloze (Lacuna)
-          const kwMatch = snippet.match(/\b(\d+\s*(?:dias|horas|meses|anos)|vedado|vedada|salvo|exceto|obrigatório|facultativo|reclusão|detenção|indulgência|dolo|culpa|impedimento|suspeição|prescrição)\b/i);
-          if (kwMatch) {
-            const ans = kwMatch[1];
-            const clozePrompt = snippet.replace(new RegExp(`\\b${ans.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
-            if (!existingPrompts.has(clozePrompt.toLowerCase())) {
-              const distractorPool = /\d/.test(ans)
-                ? ['5 dias', '10 dias', '15 dias', '30 dias', '60 dias', '90 dias', '48 horas', '2 anos', '5 anos']
-                : ['vedado', 'permitido', 'salvo', 'exceto', 'obrigatório', 'facultativo', 'reclusão', 'detenção', 'dolo', 'culpa'];
-              const opts = [ans];
-              for (const d of distractorPool) {
-                if (opts.length >= 4) break;
-                if (d.toLowerCase() !== ans.toLowerCase()) opts.push(d);
-              }
-              opts.sort(() => Math.random() - 0.5);
-              qs.push({
-                id: uid(`${trail.id}_q`),
-                tipo: 'cloze',
-                artigoRef: art.numero,
-                enunciado: clozePrompt,
-                opcoes: opts,
-                respostaCorreta: ans,
-                textoLiteral: `${art.numero} - ${this.applyOfflineMarks(snippet)}`,
-                dicaVunesp: 'Atenção máxima a prazos e palavras restritivas/nucleares na lei seca.'
-              });
-              existingPrompts.add(clozePrompt.toLowerCase());
+          const opts = [ans];
+          for (const d of distractorsPool) {
+            if (opts.length >= 4) break;
+            if (d.toLowerCase() !== ans.toLowerCase() && !opts.some((o) => o.toLowerCase() === d.toLowerCase())) {
+              opts.push(d);
             }
           }
+          if (opts.length < 4) return null;
+          opts.sort(() => Math.random() - 0.5);
 
-          // 2) Certo ou Errado (alternando literal e invertido)
-          const makeFalse = idx % 2 === 0;
-          let tfStatement = snippet;
-          let isTrue = true;
-          if (makeFalse) {
-            for (const [a, b] of swapPairs) {
-              const rx = new RegExp(`\\b${a}\\b`, 'i');
-              if (rx.test(tfStatement)) {
-                tfStatement = tfStatement.replace(rx, b);
-                isTrue = false;
-                break;
-              }
-            }
-            if (isTrue) {
-              const numRx = /\b(\d+)\s*(dias|horas|meses|anos)\b/i;
-              const nm = tfStatement.match(numRx);
-              if (nm) {
-                const alt = Number(nm[1]) + 5;
-                tfStatement = tfStatement.replace(numRx, `${alt} ${nm[2]}`);
-                isTrue = false;
+          existingPrompts.add(clozePrompt.toLowerCase());
+          return {
+            id: uid(`${trail.id}_q`),
+            tipo: 'cloze',
+            artigoRef: art.numero,
+            enunciado: clozePrompt,
+            opcoes: opts,
+            respostaCorreta: ans,
+            textoLiteral: this.applyOfflineMarks(art.rawText || ''),
+            dicaVunesp: tip
+          };
+        };
+
+        // Passada principal: gera questões de preenchimento de lacunas a partir de cada linha/parágrafo/inciso do artigo
+        for (const art of (trail.articles || [])) {
+          const fullText = (art.rawText || '').trim();
+          if (fullText.length < 25) continue;
+
+          const segments = fullText
+            .split('\n')
+            .map((s) => s.replace(/\s+/g, ' ').trim())
+            .filter((s) => s.length >= 25);
+
+          let createdForArt = 0;
+          for (const seg of segments) {
+            if (qs.length >= 6 || createdForArt >= 2) break;
+            for (const rule of clozeRules) {
+              const m = seg.match(rule.rx);
+              if (m) {
+                const q = makeCloze(art, seg, m[1], rule.getDistractors(m[1]), rule.tip);
+                if (q) {
+                  qs.push(q);
+                  createdForArt++;
+                  break;
+                }
               }
             }
           }
-          if (!existingPrompts.has(tfStatement.toLowerCase())) {
-            qs.push({
-              id: uid(`${trail.id}_q`),
-              tipo: 'true_false',
-              artigoRef: art.numero,
-              enunciado: tfStatement,
-              respostaCorreta: isTrue,
-              textoLiteral: `${art.numero} - ${this.applyOfflineMarks(snippet)}`,
-              dicaVunesp: isTrue ? 'Redação fiel à literalidade da norma.' : 'Pegadinha clássica: a banca alterou termo-chave ou prazo do dispositivo.'
-            });
-            existingPrompts.add(tfStatement.toLowerCase());
+        }
+
+        // Segunda passada: se ainda houver espaço no lote (até 6), gera novas lacunas sobre outras palavras-chave dos artigos
+        if (qs.length < 6) {
+          const fallbackPool = ['exclusivamente', 'preferencialmente', 'imediatamente', 'obrigatoriamente', 'subsidiariamente', 'independentemente', 'comprovadamente', 'fundamentadamente'];
+          for (const art of (trail.articles || [])) {
+            if (qs.length >= 6) break;
+            const segments = (art.rawText || '').split('\n').map((s) => s.replace(/\s+/g, ' ').trim()).filter((s) => s.length >= 30);
+            for (const seg of segments) {
+              if (qs.length >= 6) break;
+              const wordMatch = seg.match(/\b([a-zà-ú]{8,})\b/i);
+              if (wordMatch) {
+                const q = makeCloze(art, seg, wordMatch[1], fallbackPool, 'Memorização cirúrgica da redação literal da norma.');
+                if (q) qs.push(q);
+              }
+            }
           }
-        });
+        }
 
         return qs.slice(0, 6);
       },
@@ -989,9 +1018,9 @@
         const articlesText = trail.articles.map((a) => `${a.numero}\n${a.rawText}`).join('\n\n');
         const existingList = (trail.questions || []).map((q) => q.enunciado).join(' | ');
         const prompt = extraOnly
-          ? `Atue como especialista na banca VUNESP (Escrevente TJ-SP). Crie 4 NOVAS questões inéditas (não repita: ${existingList.slice(0, 600)}) misturando "true_false", "cloze" e "multiple_choice" sobre os artigos abaixo.
+          ? `Atue como especialista na banca VUNESP (Escrevente TJ-SP). Crie 6 NOVAS questões inéditas (não repita: ${existingList.slice(0, 600)}) tendo como referência principal o PREENCHIMENTO DE LACUNAS ("cloze", com _____ no lugar do prazo, exceção, competência ou conceito nuclear e 4 opções plausíveis estilo VUNESP).
 Retorne APENAS JSON:
-{"questions":[{"tipo":"true_false","artigoRef":"Art. X","enunciado":"...","respostaCorreta":false,"textoLiteral":"...","dicaVunesp":"..."},{"tipo":"cloze","artigoRef":"Art. X","enunciado":"... _____ ...","opcoes":["A","B","C","D"],"respostaCorreta":"A","textoLiteral":"...","dicaVunesp":"..."},{"tipo":"multiple_choice","artigoRef":"Art. X","enunciado":"...","opcoes":["A","B","C","D"],"respostaCorreta":0,"textoLiteral":"...","dicaVunesp":"..."}]}
+{"questions":[{"tipo":"cloze","artigoRef":"Art. X","enunciado":"... _____ ...","opcoes":["A","B","C","D"],"respostaCorreta":"A","textoLiteral":"Texto integral do dispositivo","dicaVunesp":"..."}]}
 
 ARTIGOS:
 ${articlesText}`
@@ -1003,10 +1032,10 @@ Receba os artigos abaixo e devolva:
    - <span class="v-comp">...</span> para COMPETÊNCIA/SUJEITO (Juiz, Escrivão, Corregedor Geral, funcionário público...)
    - <span class="v-conc">...</span> para CONCEITO/ELEMENTO NUCLEAR (dolo, indulgência, lei complementar...)
    E "notaPegadinha" curta iniciada por "⚠️ Pegadinha Vunesp:" (ou "" se não houver).
-2) "questions": 6 questões estilo VUNESP distribuídas entre "true_false", "cloze" (com _____ e 4 opcoes) e "multiple_choice" (4 opcoes e respostaCorreta índice 0..3).
+2) "questions": 6 questões estilo VUNESP tendo como referência principal o PREENCHIMENTO DE LACUNAS ("cloze", com _____ e 4 opcoes, mínimo de 4 questões nesse formato; as demais podem ser "cloze" ou "true_false").
 
 Retorne APENAS JSON válido:
-{"articles":[{"numero":"Art. X","textoHtml":"...","notaPegadinha":"⚠️ Pegadinha Vunesp: ..."}],"questions":[{"tipo":"true_false","artigoRef":"Art. X","enunciado":"...","respostaCorreta":false,"textoLiteral":"...","dicaVunesp":"..."}]}
+{"articles":[{"numero":"Art. X","textoHtml":"...","notaPegadinha":"⚠️ Pegadinha Vunesp: ..."}],"questions":[{"tipo":"cloze","artigoRef":"Art. X","enunciado":"... _____ ...","opcoes":["A","B","C","D"],"respostaCorreta":"A","textoLiteral":"...","dicaVunesp":"..."}]}
 
 ARTIGOS:
 ${articlesText}`;
@@ -1030,412 +1059,25 @@ ${articlesText}`;
     };
 
     // =========================================================================
-    // 8. PARSER HIERÁRQUICO DE LEI SECA (0% DE PERDA + LIMITE DE 6 ARTIGOS)
-    // =========================================================================
-    const LawParser = {
-      parse(rawText, disciplineId, splitAtSix = true, fallbackChunk = 6) {
-        const lines = rawText.replace(/\r\n/g, '\n').split('\n').map((l) => l.trim()).filter(Boolean);
-        const headingRx = /^(T[ÍI]TULO|CAP[ÍI]TULO|SE[ÇC][ÃA]O|SUBSE[ÇC][ÃA]O)\s+([IVXLCDM\d]+[A-Z\-]*|[ÚU]NICO)\b(.*)$/i;
-        const artRx = /^(Art\.?\s*\d+(?:\.\d+)?(?:[º°oª])?(?:\s*-\s*[A-Z])?)\.?\s*(.*)$/i;
+      findFullArticle(q) {
+        if (!q) return null;
+        const targetNum = normalizeArticleNum(q.artigoRef);
+        if (!targetNum) return null;
 
-        const hierarchy = { titulo: '', capitulo: '', secao: '', subsecao: '' };
-        const groups = [];
-        let curGroup = null;
-        let curArt = null;
-
-        const flushArt = () => {
-          if (curArt) {
-            if (!curGroup) {
-              curGroup = { breadcrumb: 'DISPOSIÇÕES', title: 'Artigos da Norma', articles: [] };
-              groups.push(curGroup);
-            }
-            curGroup.articles.push(curArt);
-            curArt = null;
-          }
-        };
-
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          const hm = line.match(headingRx);
-          if (hm) {
-            flushArt();
-            const kind = hm[1].toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            const num = hm[2].toUpperCase();
-            let desc = (hm[3] || '').replace(/^[\s\-–—:]+/, '').trim();
-            if (!desc && lines[i + 1] && !artRx.test(lines[i + 1]) && !headingRx.test(lines[i + 1]) && lines[i + 1].length < 110) {
-              desc = lines[++i];
-            }
-            const label = `${hm[1].toUpperCase()} ${num}`;
-            if (kind === 'TITULO') { hierarchy.titulo = label; hierarchy.capitulo = ''; hierarchy.secao = ''; hierarchy.subsecao = ''; }
-            else if (kind === 'CAPITULO') { hierarchy.capitulo = label; hierarchy.secao = ''; hierarchy.subsecao = ''; }
-            else if (kind === 'SECAO') { hierarchy.secao = label; hierarchy.subsecao = ''; }
-            else { hierarchy.subsecao = label; }
-
-            const crumb = [hierarchy.titulo, hierarchy.capitulo, hierarchy.secao, hierarchy.subsecao].filter(Boolean).join(' › ');
-            curGroup = { breadcrumb: crumb, title: desc || label, articles: [] };
-            groups.push(curGroup);
-            continue;
-          }
-
-          const am = line.match(artRx);
-          if (am) {
-            flushArt();
-            const numero = am[1].replace(/\s+/g, ' ').replace(/^art\.?/i, 'Art.');
-            curArt = {
-              numero,
-              rawText: line,
-              textoHtml: VunespEngine.applyOfflineMarks(am[2] || line),
-              notaPegadinha: ''
-            };
-          } else if (curArt) {
-            curArt.rawText += '\n' + line;
-            curArt.textoHtml += '\n' + VunespEngine.applyOfflineMarks(line);
-          }
-        }
-        flushArt();
-
-        // Remove grupos vazios e aplica fatiamento de no máximo 6 artigos
-        const validGroups = groups.filter((g) => g.articles.length > 0);
-        const totalArticles = validGroups.reduce((s, g) => s + g.articles.length, 0);
-        const maxPerTrail = splitAtSix ? 6 : (validGroups.length === 1 && validGroups[0].breadcrumb === 'DISPOSIÇÕES' ? fallbackChunk : 9999);
-
-        const trails = [];
-        let order = (state.trails || []).filter((t) => t.disciplineId === disciplineId).length + 1;
-
-        validGroups.forEach((g) => {
-          const chunks = [];
-          for (let i = 0; i < g.articles.length; i += maxPerTrail) {
-            chunks.push(g.articles.slice(i, i + maxPerTrail));
-          }
-          chunks.forEach((arts, cIdx) => {
-            const first = arts[0].numero;
-            const last = arts[arts.length - 1].numero;
-            const partSuffix = chunks.length > 1 ? ` (Parte ${cIdx + 1}/${chunks.length})` : '';
-            trails.push({
-              id: uid(`tr_${disciplineId}`),
-              disciplineId,
-              order: order++,
-              breadcrumb: g.breadcrumb,
-              title: g.title + partSuffix,
-              subtitle: `${first}${first !== last ? ' ao ' + last : ''} • ${arts.length} artigo${arts.length > 1 ? 's' : ''}`,
-              readingMin: arts.length <= 4 ? 5 : 10,
-              origemIa: false,
-              articles: arts,
-              questions: [],
-              selected: true
-            });
-          });
-        });
-
-        const mappedArticles = trails.reduce((s, t) => s + t.articles.length, 0);
-        return { trails, totalArticles, mappedArticles };
-      }
-    };
-
-    // =========================================================================
-    // 9. MOTOR SRS PONDERADO POR ALTA INCIDÊNCIA (482 ARTIGOS VUNESP)
-    // =========================================================================
-    const SRSEngine = {
-      getIntervals(isHigh) {
-        const useWeighted = !!state.settings.prioritizeHighIncidence && isHigh;
-        return useWeighted
-          ? { again: 0, hard: 1, good: 2, easy: 4, maxInterval: 14 }
-          : { again: 0, hard: 1, good: 3, easy: 7, maxInterval: 60 };
-      },
-
-      schedule(questionId, rating, disciplineId, artRef) {
-        const isHigh = isHighIncidenceArticle(disciplineId, artRef);
-        const cfg = this.getIntervals(isHigh);
-        const prev = state.srs[questionId] || { interval: 0, ease: 2.3, reps: 0 };
-        let interval = 0;
-        let ease = prev.ease || 2.3;
-        let reps = prev.reps || 0;
-
-        if (rating === 'again') {
-          interval = 0; reps = 0; ease = Math.max(1.3, ease - 0.2);
-        } else if (rating === 'hard') {
-          interval = cfg.hard; reps += 1; ease = Math.max(1.3, ease - 0.1);
-        } else if (rating === 'good') {
-          interval = reps === 0 ? cfg.good : Math.min(cfg.maxInterval, Math.round(Math.max(1, prev.interval) * (isHigh ? 1.6 : ease)));
-          reps += 1;
-        } else {
-          interval = reps === 0 ? cfg.easy : Math.min(cfg.maxInterval, Math.round(Math.max(2, prev.interval) * (isHigh ? 2.0 : ease + 0.3)));
-          reps += 1; ease = Math.min(2.8, ease + 0.1);
+        // 1. Busca prioritária na trilha de origem da questão
+        const originTrail = (state.trails || []).find((t) => t.id === q.trailId);
+        if (originTrail && Array.isArray(originTrail.articles)) {
+          const found = originTrail.articles.find((a) => normalizeArticleNum(a.numero) === targetNum);
+          if (found) return found;
         }
 
-        state.srs[questionId] = { due: todayISO(interval), interval, ease, reps };
-        persistState(true);
-        return interval;
-      },
-
-      enqueueTrail(trail) {
-        const dueDate = todayISO(1);
-        (trail.questions || []).forEach((q) => {
-          if (!state.srs[q.id]) {
-            const isHigh = isHighIncidenceArticle(trail.disciplineId, q.artigoRef);
-            state.srs[q.id] = { due: isHigh && state.settings.prioritizeHighIncidence ? todayISO(1) : dueDate, interval: 1, ease: 2.3, reps: 1 };
-          }
-        });
-      },
-
-      getDueQuestions(onlyHigh = false) {
-        const today = todayISO(0);
-        const due = questionBankCache.filter((q) => {
-          const rec = state.srs[q.id];
-          if (!rec || rec.due > today) return false;
-          if (onlyHigh && !isHighIncidenceQuestion(q)) return false;
-          return true;
-        });
-        // Ordena colocando Alta Incidência no topo
-        return due.sort((a, b) => {
-          const ha = isHighIncidenceQuestion(a) ? 1 : 0;
-          const hb = isHighIncidenceQuestion(b) ? 1 : 0;
-          if (ha !== hb) return hb - ha;
-          return (state.srs[a.id]?.due || '').localeCompare(state.srs[b.id]?.due || '');
-        });
-      }
-    };
-
-    // =========================================================================
-    // 10. PLAYER (FASE 1: LEITURA CRONOMETRADA / FASE 2: QUIZ / SRS / SIMULADO)
-    // =========================================================================
-    const Player = {
-      mode: null,       // 'read' | 'trail_quiz' | 'srs' | 'simulado' | 'errors'
-      trail: null,
-      questions: [],
-      qIndex: 0,
-      hits: 0,
-      answered: false,
-      timerSec: 0,
-      timerRunning: false,
-      timerHandle: null,
-
-      openTrailRead(trailId) {
-        const trail = state.trails.find((t) => t.id === trailId);
-        if (!trail) return;
-        this.mode = 'read';
-        this.trail = trail;
-        this.timerSec = (trail.readingMin || 5) * 60;
-        this.timerRunning = false;
-        this.stopTimer();
-        document.getElementById('player-overlay').classList.remove('hidden');
-        this.renderRead();
-      },
-
-      openTrailQuiz(trailId) {
-        const trail = state.trails.find((t) => t.id === trailId);
-        if (!trail) return;
-        if (!trail.questions || trail.questions.length === 0) {
-          trail.questions = VunespEngine.generateOfflineQuestions(trail);
-          persistState(true);
+        // 2. Busca nas demais trilhas da mesma disciplina
+        for (const t of (state.trails || [])) {
+          if (q.disciplineId && t.disciplineId !== q.disciplineId) continue;
+          const found = (t.articles || []).find((a) => normalizeArticleNum(a.numero) === targetNum);
+          if (found) return found;
         }
-        this.mode = 'trail_quiz';
-        this.trail = trail;
-        this.questions = trail.questions.map((q) => ({ ...q, disciplineId: trail.disciplineId, trailId: trail.id }));
-        this.qIndex = 0; this.hits = 0; this.answered = false;
-        this.stopTimer();
-        document.getElementById('player-overlay').classList.remove('hidden');
-        this.renderQuestion();
-      },
-
-      openQueue(mode, questions, title) {
-        if (!questions.length) { showToast('Nenhuma questão disponível nesta fila.', 'warn'); return; }
-        this.mode = mode;
-        this.trail = { title };
-        this.questions = questions;
-        this.qIndex = 0; this.hits = 0; this.answered = false;
-        this.stopTimer();
-        document.getElementById('player-overlay').classList.remove('hidden');
-        this.renderQuestion();
-      },
-
-      close() {
-        this.stopTimer();
-        document.getElementById('player-overlay').classList.add('hidden');
-        App.render();
-      },
-
-      stopTimer() {
-        if (this.timerHandle) clearInterval(this.timerHandle);
-        this.timerHandle = null;
-        this.timerRunning = false;
-      },
-
-      toggleTimer() {
-        if (this.timerRunning) {
-          this.stopTimer();
-        } else {
-          this.timerRunning = true;
-          this.timerHandle = setInterval(() => {
-            if (this.timerSec > 0) this.timerSec--;
-            else { this.stopTimer(); showToast('⏱️ Tempo de leitura concluído! Hora dos games.', 'success'); }
-            const el = document.getElementById('read-timer-val');
-            if (el) el.textContent = this.fmtTime(this.timerSec);
-          }, 1000);
-        }
-        const btn = document.getElementById('read-timer-btn');
-        if (btn) btn.textContent = this.timerRunning ? '⏸ Pausar' : '▶ Iniciar';
-      },
-
-      resetTimer() {
-        this.stopTimer();
-        this.timerSec = (this.trail?.readingMin || 5) * 60;
-        const el = document.getElementById('read-timer-val');
-        if (el) el.textContent = this.fmtTime(this.timerSec);
-        const btn = document.getElementById('read-timer-btn');
-        if (btn) btn.textContent = '▶ Iniciar';
-      },
-
-      fmtTime(sec) {
-        const m = String(Math.floor(sec / 60)).padStart(2, '0');
-        const s = String(sec % 60).padStart(2, '0');
-        return `${m}:${s}`;
-      },
-
-      changeFont(delta) {
-        state.settings.fontSize = Math.min(22, Math.max(13, (state.settings.fontSize || 16) + delta));
-        persistState(false);
-        this.renderRead();
-      },
-
-      toggleMarks() {
-        state.settings.showMarks = !state.settings.showMarks;
-        persistState(false);
-        this.renderRead();
-      },
-
-      formatArticleLines(htmlStr) {
-        return String(htmlStr || '').split('\n').filter(Boolean).map((line) => {
-          let cls = 'mb-2 leading-relaxed';
-          if (/^(§|Par[áa]grafo\s+[úu]nico)/i.test(line.replace(/<[^>]+>/g, '').trim())) cls += ' pl-3 border-l-2 border-slate-200 dark:border-slate-700';
-          else if (/^[IVXLCDM]+\s*[-–—]/i.test(line.replace(/<[^>]+>/g, '').trim())) cls += ' pl-5';
-          else if (/^[a-z]\)/i.test(line.replace(/<[^>]+>/g, '').trim())) cls += ' pl-8 text-[0.95em]';
-          return `<p class="${cls}">${line}</p>`;
-        }).join('');
-      },
-
-      renderRead() {
-        const t = this.trail;
-        const disc = getDiscipline(t.disciplineId);
-        const hideCls = state.settings.showMarks ? '' : 'hide-marks';
-        document.getElementById('player-header-info').innerHTML = `
-          <p class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate">${escHtml(disc.short)} • ${escHtml(t.breadcrumb || '')}</p>
-          <h2 class="font-black text-sm sm:text-base truncate">${escHtml(t.title)}</h2>
-        `;
-
-        const articlesHtml = (t.articles || []).map((a) => {
-          const isHigh = isHighIncidenceArticle(t.disciplineId, a.numero);
-          return `
-            <article class="bg-white dark:bg-slate-900 rounded-2xl border ${isHigh ? 'border-orange-300 dark:border-orange-700/70' : 'border-slate-200 dark:border-slate-800'} p-4 sm:p-5 shadow-sm">
-              <div class="flex items-center justify-between gap-2 mb-2.5">
-                <span class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-xs font-black">${escHtml(a.numero)}</span>
-                ${isHigh ? '<span class="px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 text-[10px] font-black">🔥 Alta Incidência VUNESP</span>' : ''}
-              </div>
-              <div class="law-text text-slate-800 dark:text-slate-200" style="font-size:${state.settings.fontSize || 16}px">
-                ${this.formatArticleLines(a.textoHtml || escHtml(a.rawText))}
-              </div>
-              ${a.notaPegadinha ? `<div class="pegadinha-note mt-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs font-semibold text-amber-900 dark:text-amber-200">${escHtml(a.notaPegadinha)}</div>` : ''}
-            </article>
-          `;
-        }).join('');
-
-        document.getElementById('player-body').innerHTML = `
-          <div class="max-w-3xl mx-auto space-y-4 ${hideCls}">
-            <!-- Barra de ferramentas da Fase 1 -->
-            <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 flex flex-wrap items-center justify-between gap-2 shadow-sm">
-              <div class="flex items-center gap-2">
-                <span class="px-3 py-1.5 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-mono font-black text-sm" id="read-timer-val">${this.fmtTime(this.timerSec)}</span>
-                <button id="read-timer-btn" onclick="Player.toggleTimer()" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-extrabold">${this.timerRunning ? '⏸ Pausar' : '▶ Iniciar'}</button>
-                <button onclick="Player.resetTimer()" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold">↺</button>
-              </div>
-              <div class="flex flex-wrap items-center gap-1.5">
-                <button onclick="Player.changeFont(-1)" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-extrabold">A-</button>
-                <button onclick="Player.changeFont(1)" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-extrabold">A+</button>
-                <button onclick="Player.toggleMarks()" class="px-3 py-1.5 rounded-xl text-xs font-extrabold ${state.settings.showMarks ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}">🖍️ Pegadinhas</button>
-                <button onclick="App.promptUpgradeAI('${t.id}', false)" class="px-3 py-1.5 rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 text-xs font-extrabold">✨ Upgrade IA</button>
-              </div>
-            </div>
-
-            <!-- Legenda 4 cores -->
-            <div class="vunesp-legend flex flex-wrap gap-2 text-[11px] font-bold px-1">
-              <span class="px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300">Exceção / Restrição</span>
-              <span class="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300">Prazo / Número / Quórum</span>
-              <span class="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300">Competência / Sujeito</span>
-              <span class="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300">Conceito Nuclear</span>
-            </div>
-
-            <div class="space-y-3">${articlesHtml}</div>
-
-            <div class="pt-2 pb-6 flex flex-col sm:flex-row gap-2.5">
-              <button onclick="Player.openTrailQuiz('${t.id}')" class="flex-1 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-sm shadow-lg">🎮 Iniciar Fase 2: Arena de Games (${(t.questions || []).length} questões)</button>
-              <button onclick="App.promptUpgradeAI('${t.id}', true)" class="px-4 py-3.5 rounded-2xl bg-slate-200 dark:bg-slate-800 text-xs font-extrabold">✨ + Exercícios</button>
-            </div>
-          </div>
-        `;
-      },
-
-      renderQuestion() {
-        const q = this.questions[this.qIndex];
-        if (!q) { this.renderSummary(); return; }
-        this.answered = false;
-        const total = this.questions.length;
-        const pct = Math.round((this.qIndex / total) * 100);
-        const isHigh = isHighIncidenceQuestion(q);
-        const typeLabels = { true_false: '🎯 Certo ou Errado', cloze: '🧩 Complete a Lacuna', multiple_choice: '📝 Múltipla Escolha' };
-
-        document.getElementById('player-header-info').innerHTML = `
-          <p class="text-[10px] font-extrabold uppercase text-indigo-600 dark:text-indigo-400 truncate">${escHtml(this.trail?.title || 'Treino')}</p>
-          <p class="text-xs font-black">Questão ${this.qIndex + 1} de ${total}</p>
-        `;
-
-        let controlsHtml = '';
-        if (q.tipo === 'true_false') {
-          controlsHtml = `
-            <div class="grid grid-cols-2 gap-3 mt-4">
-              <button onclick="Player.answer(true)" class="q-opt py-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-emerald-500 font-black text-sm">✅ CERTO</button>
-              <button onclick="Player.answer(false)" class="q-opt py-4 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-rose-500 font-black text-sm">❌ ERRADO</button>
-            </div>
-          `;
-        } else if (q.tipo === 'cloze') {
-          controlsHtml = `
-            <div class="grid grid-cols-2 gap-2.5 mt-4">
-              ${(q.opcoes || []).map((opt, i) => `
-                <button onclick="Player.answer(${JSON.stringify(opt).replace(/"/g, '&quot;')})" class="q-opt p-3.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 font-extrabold text-xs sm:text-sm text-center">${escHtml(opt)}</button>
-              `).join('')}
-            </div>
-          `;
-        } else {
-          controlsHtml = `
-            <div class="space-y-2.5 mt-4">
-              ${(q.opcoes || []).map((opt, i) => `
-                <button onclick="Player.answer(${i})" class="q-opt w-full p-3.5 rounded-2xl border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 text-left text-xs sm:text-sm font-bold flex items-start gap-2.5">
-                  <span class="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-xs shrink-0">${String.fromCharCode(65 + i)}</span>
-                  <span>${escHtml(opt)}</span>
-                </button>
-              `).join('')}
-            </div>
-          `;
-        }
-
-        document.getElementById('player-body').innerHTML = `
-          <div class="max-w-2xl mx-auto space-y-4 animate-fade-in">
-            <div class="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-              <div class="h-full bg-indigo-600 transition-all" style="width:${pct}%"></div>
-            </div>
-
-            <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
-              <div class="flex flex-wrap items-center gap-2 mb-3">
-                <span class="px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[11px] font-black">${typeLabels[q.tipo] || 'Questão'}</span>
-                <span class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-extrabold">${escHtml(q.artigoRef || '')}</span>
-                ${isHigh ? '<span class="px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 text-[10px] font-black">🔥 Alta Incidência</span>' : ''}
-              </div>
-              <p class="text-sm sm:text-base font-bold leading-relaxed">${escHtml(q.enunciado)}</p>
-              ${controlsHtml}
-            </div>
-
-            <div id="q-feedback"></div>
-          </div>
-        `;
+        return null;
       },
 
       answer(choice) {
@@ -1461,6 +1103,27 @@ ${articlesText}`;
 
         const isHigh = isHighIncidenceQuestion(q);
         const iv = SRSEngine.getIntervals(isHigh);
+        const fullArt = this.findFullArticle(q);
+        const hideMarksCls = state.settings.showMarks ? '' : 'hide-marks';
+
+        const fullArticleHtml = fullArt
+          ? `
+            <div class="space-y-2 ${hideMarksCls}">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-[11px] font-black uppercase tracking-wider text-indigo-700 dark:text-indigo-300">📖 Artigo Completo — ${escHtml(fullArt.numero)}</span>
+                <span class="text-[10px] font-bold text-slate-400">Texto integral na revisão</span>
+              </div>
+              <div class="law-text text-xs sm:text-sm bg-white/90 dark:bg-slate-900/90 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700 leading-relaxed max-h-96 overflow-y-auto">
+                ${this.formatArticleLines(fullArt.textoHtml || VunespEngine.applyOfflineMarks(fullArt.rawText))}
+              </div>
+              ${fullArt.notaPegadinha ? `<div class="pegadinha-note p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 text-xs font-semibold text-amber-900 dark:text-amber-200">${escHtml(fullArt.notaPegadinha)}</div>` : ''}
+            </div>
+          `
+          : `
+            <div class="law-text text-xs sm:text-sm bg-white/80 dark:bg-slate-900/80 p-3.5 rounded-2xl border border-slate-200/70 dark:border-slate-700 leading-relaxed">
+              ${q.textoLiteral || ''}
+            </div>
+          `;
 
         const srsBar = this.mode === 'srs' ? `
           <div class="pt-3 border-t border-slate-200 dark:border-slate-800">
@@ -1481,9 +1144,7 @@ ${articlesText}`;
             <p class="font-black text-sm ${correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}">
               ${correct ? '✅ Mandou bem! (+10 XP)' : '❌ Pegadinha! Enviada ao Caderno de Erros'}
             </p>
-            <div class="law-text text-xs sm:text-sm bg-white/80 dark:bg-slate-900/80 p-3.5 rounded-2xl border border-slate-200/70 dark:border-slate-700 leading-relaxed">
-              ${q.textoLiteral || ''}
-            </div>
+            ${fullArticleHtml}
             ${q.dicaVunesp ? `<p class="text-xs font-bold text-amber-800 dark:text-amber-300">💡 Dica VUNESP: ${escHtml(q.dicaVunesp)}</p>` : ''}
             ${srsBar}
           </div>
