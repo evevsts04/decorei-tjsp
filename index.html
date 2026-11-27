@@ -1572,6 +1572,9 @@ ${articlesText}`;
 
         document.getElementById('player-header-info').innerHTML = `
           <p class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate">${escHtml(this.title)}</p>
+          <h2 class="font-black text-sm sm:text-base truncate">Questão ${this.qIndex + 1} de ${total}</h2>
+        `;
+
         const enunciadoHtml = escHtml(q.enunciado).replace(
           /\[\s*(?:(\d+)\.\s*)?_{3,}\s*\]|_{3,}/g,
           (_, num) => `<span class="inline-block px-2.5 py-0.5 mx-1 rounded-lg bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-black border-b-2 border-indigo-500">[ ${num ? num + '. ' : ''}______ ]</span>`
