@@ -883,69 +883,143 @@
         const qs = [];
         const existingPrompts = new Set((trail.questions || []).map((q) => q.enunciado.toLowerCase()));
 
-        // Padrões cirúrgicos para preenchimento de lacunas (cloze) no estilo VUNESP
+        // Regras estritas do método Cloze (apenas termos jurídicos estratégicos; nunca artigos/preposições simples)
         const clozeRules = [
           {
-            rx: /\b(\d+\s*(?:dias?\s*úteis|dias?\s*corridos|dias?|horas?|meses|anos?|salários?-mínimos?|%|por cento))\b/i,
+            category: 'prazo',
+            rx: /\b(\d+(?:[\.,]\d+)?\s*(?:dias?\s*úteis|dias?\s*corridos|dias?|horas?|meses|mês|anos?|salários?-mínimos?|%|por cento)|\d+\/\d+|maioria absoluta|maioria simples|dois terços|três quintos|durante o dia)\b/gi,
             getDistractors: (ans) => {
               const lower = ans.toLowerCase();
+              if (lower.includes('durante o dia')) return ['a qualquer hora', 'durante a noite', 'em dias úteis', 'mediante aviso prévio'];
               if (lower.includes('hora')) return ['12 horas', '24 horas', '48 horas', '72 horas', '6 horas'];
               if (lower.includes('mês') || lower.includes('mes')) return ['1 mês', '2 meses', '3 meses', '6 meses', '12 meses'];
               if (lower.includes('ano')) return ['1 ano', '2 anos', '3 anos', '5 anos', '8 anos', '10 anos'];
               if (lower.includes('salário')) return ['20 salários-mínimos', '30 salários-mínimos', '40 salários-mínimos', '60 salários-mínimos'];
               if (lower.includes('%') || lower.includes('por cento')) return ['10%', '25%', '50%', '70%', '90%'];
+              if (lower.includes('maioria') || lower.includes('terços') || lower.includes('quintos') || lower.includes('/')) {
+                return ['maioria absoluta', 'maioria simples', 'dois terços', 'três quintos', '1/3', '2/3'];
+              }
               if (lower.includes('úteis')) return ['3 dias úteis', '5 dias úteis', '10 dias úteis', '15 dias úteis', '30 dias úteis'];
               if (lower.includes('corridos')) return ['5 dias corridos', '10 dias corridos', '15 dias corridos', '30 dias corridos'];
               return ['2 dias', '3 dias', '5 dias', '10 dias', '15 dias', '30 dias', '60 dias', '90 dias'];
             },
-            tip: 'Atenção aos prazos, números e percentuais exatos previstos na lei seca.'
+            tip: 'Atenção aos prazos, números, quóruns e limites exatos da redação literal.'
           },
           {
-            rx: /\b(vedado|vedada|proibido|proibida|salvo|exceto|somente|apenas|obrigatório|obrigatória|facultativo|facultativa|independentemente|ressalvado|ressalvada|nunca|jamais)\b/i,
-            getDistractors: () => ['vedado', 'permitido', 'obrigatório', 'facultativo', 'salvo', 'inclusive', 'exceto', 'somente', 'independentemente', 'sempre'],
-            tip: 'A VUNESP costuma trocar termos restritivos e exceções (ex.: vedado/permitido, salvo/inclusive).'
+            category: 'excecao',
+            rx: /\b(salvo|exceto|ressalvado|ressalvada|ressalvados|ressalvadas|independentemente|em regra|sempre que)\b/gi,
+            getDistractors: () => ['salvo', 'exceto', 'inclusive', 'ressalvado', 'independentemente', 'mediante', 'sempre que', 'em regra'],
+            tip: 'Termos de exceção são os alvos preferidos de inversão pelas bancas.'
           },
           {
-            rx: /\b(reclusão|detenção|indulgência|dolo|dolosa|doloso|culpa|culposa|culposo|impedimento|suspeição|prescrição|decadência|inafiançável|imprescritível|segredo de justiça|ampla defesa|contraditório|de ofício|maioria absoluta|maioria simples|dois terços|três quintos)\b/i,
-            getDistractors: () => ['reclusão', 'detenção', 'dolo', 'culpa', 'impedimento', 'suspeição', 'prescrição', 'decadência', 'maioria absoluta', 'maioria simples', 'de ofício', 'indulgência'],
-            tip: 'Conceito nuclear frequentemente cobrado na literalidade pela banca VUNESP.'
+            category: 'permissao',
+            rx: /\b(vedado|vedada|vedados|vedadas|proibido|proibida|facultado|facultada|facultativo|facultativa|obrigatório|obrigatória|somente|apenas|exclusivamente|nunca|jamais|poderá|deverá)\b/gi,
+            getDistractors: (ans) => {
+              const l = ans.toLowerCase();
+              if (l === 'poderá' || l === 'deverá') return ['poderá', 'deverá', 'não poderá', 'deixará de'];
+              return ['vedado', 'permitido', 'facultado', 'obrigatório', 'somente', 'inclusive', 'exclusivamente', 'proibido'];
+            },
+            tip: 'Observe a diferença entre proibição, faculdade e obrigatoriedade (ex.: poderá vs. deverá).'
           },
           {
-            rx: /\b(Juiz(?:\s+de\s+Direito|\s+Corregedor\s+Permanente)?|Escriv[ãa]o|Chefe de Secretaria|Oficial de Justiça|Corregedor Geral(?: da Justiça)?|funcionário público|Ministério Público|Tribunal de Justiça|Órgão Especial|Conselho Superior da Magistratura|autoridade competente)\b/i,
-            getDistractors: () => ['Juiz de Direito', 'Escrivão', 'Oficial de Justiça', 'Corregedor Geral da Justiça', 'Ministério Público', 'Órgão Especial', 'Conselho Superior da Magistratura', 'autoridade competente'],
-            tip: 'Confira exatamente quem detém a competência ou legitimidade no dispositivo.'
+            category: 'competencia',
+            rx: /\b(Juiz(?:es)?(?:\s+de\s+Direito|\s+Corregedor\s+Permanente)?|Escriv[ãa]o|Chefe de Secretaria|Oficial de Justiça|Corregedor Geral(?: da Justiça)?|funcionário público|servidor(?:es)? públicos?|Ministério Público|Tribunal de Justiça|Órgão Especial|Conselho Superior da Magistratura|autoridade competente|determinação judicial)\b/gi,
+            getDistractors: () => ['Juiz de Direito', 'Escrivão', 'Oficial de Justiça', 'Corregedor Geral da Justiça', 'Ministério Público', 'Órgão Especial', 'autoridade competente', 'determinação judicial'],
+            tip: 'Confira exatamente qual autoridade ou sujeito pratica o ato no dispositivo.'
+          },
+          {
+            category: 'conceito',
+            rx: /\b(reclusão|detenção|indulgência|dolo|dolosa|doloso|culpa|culposa|culposo|impedimento|suspeição|prescrição|decadência|inafiançável|imprescritível|segredo de justiça|trânsito em julgado|ampla defesa|contraditório|de ofício|lei complementar|lei ordinária)\b/gi,
+            getDistractors: () => ['reclusão', 'detenção', 'dolo', 'culpa', 'impedimento', 'suspeição', 'prescrição', 'decadência', 'de ofício', 'lei complementar', 'lei ordinária'],
+            tip: 'Conceito jurídico nuclear cobrado na literalidade da lei seca.'
           }
         ];
 
-        const makeCloze = (art, segment, ans, distractorsPool, tip) => {
-          const escapedAns = ans.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-          const clozePrompt = segment.replace(new RegExp(`\\b${escapedAns}\\b`, 'i'), '_____');
-          if (!clozePrompt.includes('_____') || existingPrompts.has(clozePrompt.toLowerCase())) return null;
-
-          const opts = [ans];
-          for (const d of distractorsPool) {
-            if (opts.length >= 4) break;
-            if (d.toLowerCase() !== ans.toLowerCase() && !opts.some((o) => o.toLowerCase() === d.toLowerCase())) {
-              opts.push(d);
+        const extractStrategicMatches = (segment) => {
+          const found = [];
+          for (const rule of clozeRules) {
+            rule.rx.lastIndex = 0;
+            let m;
+            while ((m = rule.rx.exec(segment)) !== null) {
+              const start = m.index;
+              const end = start + m[0].length;
+              const overlaps = found.some((f) => !(end <= f.start || start >= f.end));
+              if (!overlaps) {
+                found.push({
+                  start,
+                  end,
+                  text: m[1] || m[0],
+                  rule
+                });
+              }
             }
           }
-          if (opts.length < 4) return null;
-          opts.sort(() => Math.random() - 0.5);
+          // Mantém a ordem exata no texto e limita a 2 ou 3 lacunas no máximo para preservar o contexto
+          found.sort((a, b) => a.start - b.start);
+          return found.slice(0, 3);
+        };
 
+        const makeMultiCloze = (art, segment, matches) => {
+          if (!matches.length) return null;
+
+          // Substitui de trás para frente preservando 100% da literalidade original da lei
+          let clozePrompt = segment;
+          for (let i = matches.length - 1; i >= 0; i--) {
+            const m = matches[i];
+            clozePrompt = clozePrompt.slice(0, m.start) + `[ ${i + 1}. ______ ]` + clozePrompt.slice(m.end);
+          }
+
+          if (existingPrompts.has(clozePrompt.toLowerCase())) return null;
+
+          const formatCombo = (vals) => vals.map((v, idx) => `${idx + 1}. ${v}`).join('  •  ');
+          const correctVals = matches.map((m) => m.text);
+          const correctStr = formatCombo(correctVals);
+
+          // Monta 3 distratores combinando termos plausíveis da mesma categoria de cada lacuna
+          const distractorSet = new Set([correctStr.toLowerCase()]);
+          const opcoes = [correctStr];
+
+          const pools = matches.map((m) =>
+            m.rule.getDistractors(m.text).filter((d) => d.toLowerCase() !== m.text.toLowerCase())
+          );
+
+          let attempts = 0;
+          while (opcoes.length < 4 && attempts < 40) {
+            attempts++;
+            const candidate = correctVals.map((val, idx) => {
+              const pool = pools[idx];
+              if (!pool.length) return val;
+              // Troca ao menos 1 lacuna por tentativa
+              if (matches.length === 1 || Math.random() < 0.65 || idx === (attempts % matches.length)) {
+                return pool[Math.floor(Math.random() * pool.length)];
+              }
+              return val;
+            });
+            const candStr = formatCombo(candidate);
+            if (!distractorSet.has(candStr.toLowerCase())) {
+              distractorSet.add(candStr.toLowerCase());
+              opcoes.push(candStr);
+            }
+          }
+
+          if (opcoes.length < 4) return null;
+          opcoes.sort(() => Math.random() - 0.5);
           existingPrompts.add(clozePrompt.toLowerCase());
+
           return {
             id: uid(`${trail.id}_q`),
             tipo: 'cloze',
             artigoRef: art.numero,
             enunciado: clozePrompt,
-            opcoes: opts,
-            respostaCorreta: ans,
+            opcoes,
+            respostaCorreta: correctStr,
+            gabaritoNumerado: correctStr,
             textoLiteral: this.applyOfflineMarks(art.rawText || ''),
-            dicaVunesp: tip
+            dicaVunesp: matches[0].rule.tip
           };
         };
 
-        // Passada principal: gera questões de preenchimento de lacunas a partir de cada linha/parágrafo/inciso do artigo
+        // Gera até 6 questões de lacunas estratégicas (máx. 2-3 lacunas por dispositivo, sem palavras triviais)
         for (const art of (trail.articles || [])) {
           const fullText = (art.rawText || '').trim();
           if (fullText.length < 25) continue;
@@ -958,32 +1032,12 @@
           let createdForArt = 0;
           for (const seg of segments) {
             if (qs.length >= 6 || createdForArt >= 2) break;
-            for (const rule of clozeRules) {
-              const m = seg.match(rule.rx);
-              if (m) {
-                const q = makeCloze(art, seg, m[1], rule.getDistractors(m[1]), rule.tip);
-                if (q) {
-                  qs.push(q);
-                  createdForArt++;
-                  break;
-                }
-              }
-            }
-          }
-        }
-
-        // Segunda passada: se ainda houver espaço no lote (até 6), gera novas lacunas sobre outras palavras-chave dos artigos
-        if (qs.length < 6) {
-          const fallbackPool = ['exclusivamente', 'preferencialmente', 'imediatamente', 'obrigatoriamente', 'subsidiariamente', 'independentemente', 'comprovadamente', 'fundamentadamente'];
-          for (const art of (trail.articles || [])) {
-            if (qs.length >= 6) break;
-            const segments = (art.rawText || '').split('\n').map((s) => s.replace(/\s+/g, ' ').trim()).filter((s) => s.length >= 30);
-            for (const seg of segments) {
-              if (qs.length >= 6) break;
-              const wordMatch = seg.match(/\b([a-zà-ú]{8,})\b/i);
-              if (wordMatch) {
-                const q = makeCloze(art, seg, wordMatch[1], fallbackPool, 'Memorização cirúrgica da redação literal da norma.');
-                if (q) qs.push(q);
+            const matches = extractStrategicMatches(seg);
+            if (matches.length >= 1) {
+              const q = makeMultiCloze(art, seg, matches);
+              if (q) {
+                qs.push(q);
+                createdForArt++;
               }
             }
           }
@@ -1017,25 +1071,40 @@
       async upgradeTrailWithAI(trail, extraOnly = false) {
         const articlesText = trail.articles.map((a) => `${a.numero}\n${a.rawText}`).join('\n\n');
         const existingList = (trail.questions || []).map((q) => q.enunciado).join(' | ');
+
+        const clozeInstructions = `Atue como um especialista em concursos públicos brasileiros (Escrevente TJ-SP / banca VUNESP) e criação de material de estudo ativo (método Cloze/lacunas).
+Regras estritas para os EXERCÍCIOS (100% formato "cloze" — NÃO gere Certo/Errado nem múltipla escolha tradicional):
+1. NÃO altere a redação original da lei (mantenha a literalidade exata no "enunciado").
+2. Substitua por [ 1. ______ ], [ 2. ______ ], [ 3. ______ ] apenas palavras-chave estratégicas que costumam ser trocadas por bancas de concurso: prazos, números, quóruns, palavras de exceção (salvo, exceto, ressalvado), permissões/proibições (vedado, facultado, obrigatório, poderá/deverá), competências (quem pratica o ato) e conectivos lógicos (e/ou).
+3. Crie no máximo 2 a 3 lacunas por artigo/inciso (ou 1 se o trecho for muito curto) para não destruir o contexto da frase.
+4. NÃO oculte artigos definidos (o, a), preposições simples ou palavras óbvias sem relevância jurídica.
+5. No campo "enunciado", entregue APENAS o texto literal com as lacunas numeradas (ex: "... [ 1. ______ ] ... [ 2. ______ ] ...").
+6. No campo "opcoes", forneça 4 combinações no formato "1. termoA • 2. termoB" (1 exata igual à lei + 3 distratores estilo VUNESP).
+7. No campo "respostaCorreta" e "gabaritoNumerado", informe exatamente o gabarito numerado correspondente (igual à opção correta).`;
+
         const prompt = extraOnly
-          ? `Atue como especialista na banca VUNESP (Escrevente TJ-SP). Crie 6 NOVAS questões inéditas (não repita: ${existingList.slice(0, 600)}) tendo como referência principal o PREENCHIMENTO DE LACUNAS ("cloze", com _____ no lugar do prazo, exceção, competência ou conceito nuclear e 4 opções plausíveis estilo VUNESP).
-Retorne APENAS JSON:
-{"questions":[{"tipo":"cloze","artigoRef":"Art. X","enunciado":"... _____ ...","opcoes":["A","B","C","D"],"respostaCorreta":"A","textoLiteral":"Texto integral do dispositivo","dicaVunesp":"..."}]}
+          ? `${clozeInstructions}
+
+Crie 6 NOVAS questões inéditas de preenchimento de lacunas (não repita: ${existingList.slice(0, 600)}).
+Retorne APENAS JSON válido:
+{"questions":[{"tipo":"cloze","artigoRef":"Art. X","enunciado":"Art. X - ... [ 1. ______ ] ... [ 2. ______ ] ...","opcoes":["1. salvo • 2. durante o dia","1. exceto • 2. a qualquer hora","1. salvo • 2. durante a noite","1. inclusive • 2. durante o dia"],"respostaCorreta":"1. salvo • 2. durante o dia","gabaritoNumerado":"1. salvo • 2. durante o dia","textoLiteral":"Texto integral do dispositivo","dicaVunesp":"..."}]}
 
 ARTIGOS:
 ${articlesText}`
-          : `Atue como especialista na preparação para Escrevente Técnico Judiciário do TJ-SP (banca VUNESP), focado em marcação cirúrgica de lei seca.
-Receba os artigos abaixo e devolva:
+          : `Atue como especialista na preparação para Escrevente Técnico Judiciário do TJ-SP (banca VUNESP).
+Receba os artigos abaixo e devolva um JSON com duas chaves:
 1) "articles": MESMO texto integral (100% literal, sem resumir nem alterar redação), aplicando marcação cirúrgica com spans:
    - <span class="v-exc">...</span> para EXCEÇÃO/RESTRIÇÃO (salvo, exceto, vedado, somente, ressalvado...)
    - <span class="v-prazo">...</span> para PRAZO/NÚMERO/QUÓRUM (15 dias, 2/3, 48 horas, reclusão...)
    - <span class="v-comp">...</span> para COMPETÊNCIA/SUJEITO (Juiz, Escrivão, Corregedor Geral, funcionário público...)
    - <span class="v-conc">...</span> para CONCEITO/ELEMENTO NUCLEAR (dolo, indulgência, lei complementar...)
    E "notaPegadinha" curta iniciada por "⚠️ Pegadinha Vunesp:" (ou "" se não houver).
-2) "questions": 6 questões estilo VUNESP tendo como referência principal o PREENCHIMENTO DE LACUNAS ("cloze", com _____ e 4 opcoes, mínimo de 4 questões nesse formato; as demais podem ser "cloze" ou "true_false").
+
+2) "questions": 6 questões seguindo rigorosamente estas regras:
+${clozeInstructions}
 
 Retorne APENAS JSON válido:
-{"articles":[{"numero":"Art. X","textoHtml":"...","notaPegadinha":"⚠️ Pegadinha Vunesp: ..."}],"questions":[{"tipo":"cloze","artigoRef":"Art. X","enunciado":"... _____ ...","opcoes":["A","B","C","D"],"respostaCorreta":"A","textoLiteral":"...","dicaVunesp":"..."}]}
+{"articles":[{"numero":"Art. X","textoHtml":"...","notaPegadinha":"⚠️ Pegadinha Vunesp: ..."}],"questions":[{"tipo":"cloze","artigoRef":"Art. X","enunciado":"Art. X - ... [ 1. ______ ] ... [ 2. ______ ] ...","opcoes":["1. salvo • 2. durante o dia","1. exceto • 2. a qualquer hora","1. salvo • 2. durante a noite","1. inclusive • 2. durante o dia"],"respostaCorreta":"1. salvo • 2. durante o dia","gabaritoNumerado":"1. salvo • 2. durante o dia","textoLiteral":"...","dicaVunesp":"..."}]}
 
 ARTIGOS:
 ${articlesText}`;
@@ -1503,10 +1572,10 @@ ${articlesText}`;
 
         document.getElementById('player-header-info').innerHTML = `
           <p class="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 truncate">${escHtml(this.title)}</p>
-          <h2 class="font-black text-sm truncate">Questão ${this.qIndex + 1} de ${total} • Acertos: ${this.hits}</h2>
-        `;
-
-        const enunciadoHtml = escHtml(q.enunciado).replace(/_{3,}/g, '<span class="inline-block px-2.5 py-0.5 mx-1 rounded-lg bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-black border-b-2 border-indigo-500">_____</span>');
+        const enunciadoHtml = escHtml(q.enunciado).replace(
+          /\[\s*(?:(\d+)\.\s*)?_{3,}\s*\]|_{3,}/g,
+          (_, num) => `<span class="inline-block px-2.5 py-0.5 mx-1 rounded-lg bg-indigo-100 dark:bg-indigo-950/80 text-indigo-700 dark:text-indigo-300 font-black border-b-2 border-indigo-500">[ ${num ? num + '. ' : ''}______ ]</span>`
+        );
 
         let optionsHtml = '';
         if (q.tipo === 'true_false') {
@@ -1649,6 +1718,12 @@ ${articlesText}`;
             <p class="font-black text-sm ${correct ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}">
               ${correct ? '✅ Mandou bem! (+10 XP)' : '❌ Pegadinha! Enviada ao Caderno de Erros'}
             </p>
+            ${q.tipo === 'cloze' ? `
+              <div class="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 text-xs">
+                <span class="font-black text-indigo-700 dark:text-indigo-300">🔑 Gabarito das Lacunas:</span>
+                <span class="font-extrabold text-slate-800 dark:text-slate-100 ml-1">${escHtml(q.gabaritoNumerado || q.respostaCorreta)}</span>
+              </div>
+            ` : ''}
             ${fullArticleHtml}
             ${q.dicaVunesp ? `<p class="text-xs font-bold text-amber-800 dark:text-amber-300">💡 Dica VUNESP: ${escHtml(q.dicaVunesp)}</p>` : ''}
             ${srsBar}
